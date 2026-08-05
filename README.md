@@ -1,0 +1,2 @@
+# mrules
+stylopis pro Maperitive
