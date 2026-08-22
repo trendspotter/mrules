@@ -1,0 +1,723 @@
+// =========================================================================
+// MAPERITIVE RULESET: SPECIALIZOVANÁ MAPA VEŘEJNÉ DOPRAVY V5.4
+// =========================================================================
+
+features
+	lines
+		// Hranice
+		boundary_city : line[boundary=administrative AND admin_level=8]
+		boundary_district : line[boundary=administrative AND admin_level=10]
+		
+		// Letecké dráhy
+		airport_runway : line[aeroway=runway]
+		
+		// Autobusy
+		route_flixbus : relation[type=route AND route=bus AND (operator=FlixBus OR operator="Flixbus" OR operator="FlixBus DACH GmbH")]
+		route_regiojet : relation[type=route AND route=bus AND (operator=RegioJet OR operator="Regiojet" OR operator="STUDENT AGENCY")]
+		route_bus_ae : relation[type=route AND route=bus AND (ref=AE OR name="Airport Express")]
+		route_bus_city : relation[type=route AND route=bus AND (network=MHD OR network=urban OR network=city)]
+		route_bus_suburban : relation[type=route AND route=bus AND (network=regional OR network=suburban OR network=PAD)]
+		route_international : relation[type=route AND route=bus AND (network=international OR network=int OR border=yes)]
+		route_standard : relation[type=route AND route=bus]
+		
+		// Metro podle tras (včetně výstavby)
+		route_subway_a : relation[type=route AND route=subway AND (ref=A OR line=A)]
+		route_subway_b : relation[type=route AND route=subway AND (ref=B OR line=B)]
+		route_subway_c : relation[type=route AND route=subway AND (ref=C OR line=C)]
+		route_subway_d : relation[type=route AND route=subway AND (ref=D OR line=D)]
+		route_subway : relation[type=route AND route=subway]
+		
+		// Tramvaje (vyloučena nástupiště)
+		route_tram_const : relation[type=route AND route=tram AND state=construction AND NOT public_transport=platform AND NOT highway=platform]
+		route_tram_tourist : relation[type=route AND route=tram AND tourist=yes AND NOT public_transport=platform AND NOT highway=platform]
+		route_tram : relation[type=route AND route=tram AND NOT state=construction AND NOT tourist=yes AND NOT public_transport=platform AND NOT highway=platform]
+		
+		// Ostatní veřejná doprava
+		route_ferry : relation[type=route AND route=ferry]
+		route_flight : relation[type=route AND route=flight]
+		
+		// Lanovky a pozemní lanovky
+		line_funicular : line[aerialway=funicular OR route=funicular OR railway=funicular]
+		line_aerialway : line[aerialway=cable_car OR aerialway=gondola OR aerialway=chair_lift]
+		
+		// Železnice: relace osobních vlaků, hlavní koleje, mosty a výluky/výstavba
+		route_train : relation[type=route AND route=train]
+		line_railway_main : line[railway=rail AND NOT service AND NOT bridge=yes AND NOT state=construction AND NOT railway=construction]
+		line_railway_bridge : line[railway=rail AND bridge=yes]
+		line_railway_construction : line[railway=construction OR (railway=rail AND (state=construction OR construction=yes))]
+
+	points
+		// Názvy městských obvodů
+		district_label : node[place=suburb OR place=quarter OR (boundary=administrative AND admin_level=10)]
+		
+		// Autobusy
+		bus_stop : node[highway=bus_stop]
+		bus_stop : node[amenity=bus_station]
+		bus_station_node : node[amenity=bus_station]
+		
+		// Tramvaje
+		tram_stop_node : node[railway=tram_stop]
+		
+		// Metro stanice (bodové)
+		subway_station_a : node[railway=station AND station=subway AND (ref=A OR line=A)]
+		subway_station_b : node[railway=station AND station=subway AND (ref=B OR line=B)]
+		subway_station_c : node[railway=station AND station=subway AND (ref=C OR line=C)]
+		subway_station_d : node[(railway=station OR railway=construction) AND (station=subway OR construction=station) AND (ref=D OR line=D)]
+		
+		// Železnice a lanovky
+		railway_station_node : node[railway=station AND NOT station=subway]
+		railway_halt_node : node[railway=halt]
+		aerialway_station : node[aerialway=station]
+		
+		// Ostatní
+		ferry_terminal_public : node[amenity=ferry_terminal AND NOT access=private]
+		airport_node : node[aeroway=aerodrome]
+		taxi_rank : node[amenity=taxi]
+
+	areas
+		bus_station_area : area[amenity=bus_station]
+		river_area : area[waterway=riverbank OR (natural=water AND water=river)]
+		
+		// Plochy stanic metra
+		subway_station_area_a : area[(railway=station OR building=station) AND station=subway AND (ref=A OR line=A)]
+		subway_station_area_b : area[(railway=station OR building=station) AND station=subway AND (ref=B OR line=B)]
+		subway_station_area_c : area[(railway=station OR building=station) AND station=subway AND (ref=C OR line=C)]
+		subway_station_area_d : area[(railway=station OR building=station OR railway=construction) AND (station=subway OR construction=station) AND (ref=D OR line=D)]
+		subway_station_area_gen : area[(railway=station OR building=station OR public_transport=station) AND station=subway]
+
+properties
+	map-background-color : #FDFDFD
+	map-background-opacity : 1
+
+rules
+	// -------------------------------------------------------------------------
+	// 1. PLOCHY
+	// -------------------------------------------------------------------------
+	target : river_area
+		define
+			fill-color : #B5D0D0
+			line-style : solid
+			line-color : #88B0B0
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : bus_station_area
+		define
+			fill-color : #E8E1D5
+			line-style : solid
+			line-color : #B0A391
+			line-width : 1
+		draw : fill
+		draw : line
+
+	// PLOCHY STANIC METRA
+	target : subway_station_area_a
+		define
+			fill-color : #006400
+			fill-opacity : 0.3
+			line-color : #006400
+			line-width : 2
+		draw : fill
+		draw : line
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #006400
+			text : name
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : subway_station_area_b
+		define
+			fill-color : #DAA520
+			fill-opacity : 0.3
+			line-color : #DAA520
+			line-width : 2
+		draw : fill
+		draw : line
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #DAA520
+			text : name
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : subway_station_area_c
+		define
+			fill-color : #8B008B
+			fill-opacity : 0.3
+			line-color : #8B008B
+			line-width : 2
+		draw : fill
+		draw : line
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #8B008B
+			text : name
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : subway_station_area_d
+		define
+			fill-color : #0000FF
+			fill-opacity : 0.2
+			line-color : #0000FF
+			line-width : 2
+			line-style : dash
+		draw : fill
+		draw : line
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #0000FF
+			text : name
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : subway_station_area_gen
+		define
+			fill-color : #666666
+			fill-opacity : 0.3
+			line-color : #333333
+			line-width : 2
+		draw : fill
+		draw : line
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #333333
+			text : name
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// -------------------------------------------------------------------------
+	// 2. LINIOVÉ PRVKY (Hranice, Železnice, Doprava)
+	// -------------------------------------------------------------------------
+	target : boundary_city
+		define
+			line-color : #702070
+			line-width : 11:1.5; 14:3; 16:4.5
+			line-style : dashdot
+			line-opacity : 0.8
+		draw : line
+
+	target : boundary_district
+		define
+			line-color : #A050A0
+			line-width : 11:1; 14:2; 16:3
+			line-style : dash
+			line-opacity : 0.6
+		draw : line
+
+	target : airport_runway
+		define
+			line-color : #BBBBBB
+			line-width : 11:3; 14:8; 16:14
+			line-style : solid
+		draw : line
+
+	// LINIE METRA
+	target : route_subway_a
+		define
+			line-color : #006400
+			line-width : 11:4; 14:7; 16:10
+			line-style : solid
+		draw : line
+	
+	target : route_subway_b
+		define
+			line-color : #DAA520
+			line-width : 11:4; 14:7; 16:10
+			line-style : solid
+		draw : line
+		
+	target : route_subway_c
+		define
+			line-color : #8B008B
+			line-width : 11:4; 14:7; 16:10
+			line-style : solid
+		draw : line
+		
+	target : route_subway_d
+		define
+			line-color : #0000FF
+			line-width : 11:4; 14:7; 16:10
+			line-style : dash
+		draw : line
+
+	// LINIE TRAMVAJÍ (S ČÍSLY LINEK)
+	target : route_tram
+		define
+			line-color : #8B008B
+			line-width : 11:2; 14:4; 16:6
+			line-style : solid
+			line-opacity : 0.85
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #8B008B
+			text : ref
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : route_tram_const
+		define
+			line-color : #8B008B
+			line-width : 11:2; 14:4; 16:6
+			line-style : dash
+			line-opacity : 0.6
+		draw : line
+		
+	target : route_tram_tourist
+		define
+			line-color : #FF4500
+			line-width : 11:2; 14:4; 16:6
+			line-style : solid
+			line-offset : 11:2; 14:4; 16:6
+			line-offset-sides : left
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #FF4500
+			text : ref
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// LINIE AUTOBUSŮ A SPECIÁLNÍCH LINEK
+	target : route_bus_ae
+		define
+			line-color : #FF0000
+			line-width : 11:3; 14:5; 16:7
+			line-style : dot
+			line-opacity : 0.95
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #FF0000
+			text : "Airport Express"
+			text-offset-vertical : -10
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : route_flixbus
+		define
+			line-color : #73CD1A
+			line-width : 11:3; 14:5; 16:7
+			line-offset : 11:3; 14:5; 16:7
+			line-offset-sides : right
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #73CD1A
+			text : "FLIXBUS"
+			text-offset-vertical : -10
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : route_regiojet
+		define
+			line-color : #D4A373
+			line-width : 11:3; 14:5; 16:7
+			line-offset : 11:3; 14:5; 16:7
+			line-offset-sides : left
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:12; 16:14
+			font-weight : bold
+			text-color : #D4A373
+			text : "RegioJet"
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : route_bus_city
+		define
+			line-color : #00BFFF
+			line-width : 11:3; 14:5; 16:7
+			line-style : solid
+			line-opacity : 0.85
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #00BFFF
+			text : ref
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : route_bus_suburban
+		define
+			line-color : #2E8B57
+			line-width : 11:3; 14:5; 16:7
+			line-style : solid
+			line-opacity : 0.85
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #2E8B57
+			text : ref
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : route_standard
+		define
+			line-color : #0066CC
+			line-width : 11:3; 14:5; 16:7
+			line-style : solid
+			line-opacity : 0.85
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:10; 14:13; 16:15
+			font-weight : bold
+			text-color : #0066CC
+			text : ref
+			text-offset-vertical : -8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// ŽELEZNICE, LANOVKY A TRAJEKTY
+	target : line_railway_main
+		define
+			line-color : #444444
+			line-width : 11:1.5; 14:2.5; 16:3.5
+			line-style : solid
+		draw : line
+		
+	target : line_railway_bridge
+		define
+			line-color : #FFFFFF
+			line-width : 11:2.5; 14:4; 16:6
+			line-style : solid
+		draw : line
+		define
+			line-color : #222222
+			line-width : 11:1.5; 14:3; 16:4.5
+			line-style : solid
+		draw : line
+		
+	target : line_railway_construction
+		define
+			line-color : #FF6600
+			line-width : 11:2; 14:3; 16:4
+			line-style : dash
+		draw : line
+
+	target : line_funicular
+		define
+			line-color : #663300
+			line-width : 11:1.5; 14:2.5; 16:3.5
+			line-style : dash
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:8; 14:10
+			text-color : #663300
+			text : name
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : route_train
+		define
+			line-color : #000000
+			line-width : 11:2; 14:3; 16:5
+			line-opacity : 0.3
+		draw : line
+		
+	target : line_aerialway
+		define
+			line-color : #333333
+			line-width : 11:1.5; 14:2; 16:3
+			line-style : solid
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:8; 14:10
+			text-color : #333333
+			text : name
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// VODNÍ A LETECKÁ DOPRAVA
+	target : route_ferry
+		define
+			line-color : #0088FF
+			line-width : 11:3; 14:5; 16:7
+			line-style : dash
+		draw : line
+		define
+			font-family : Arial
+			font-size : 11:8; 14:10
+			font-weight : bold
+			text-color : #0088FF
+			text : name
+			text-offset-vertical : -10
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : route_flight
+		define
+			line-color : #00CCFF
+			line-width : 11:2; 14:3; 16:4
+			line-style : dot
+		draw : line
+
+	// -------------------------------------------------------------------------
+	// 3. BODOVÉ PRVKY A POPISKY (Vykreslují se zcela nahoře)
+	// -------------------------------------------------------------------------
+	target : district_label
+		define
+			font-family : Arial
+			font-size : 11:12; 14:16; 16:22
+			font-weight : bold
+			text-color : #502050
+			text : name
+			text-halo-width : 3
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// BODOVÉ STANICE METRA (Pro případ, že jsou v OSM datech zakresleny jako uzly)
+	target : subway_station_a
+		define
+			shape : square
+			shape-size : 12:8; 14:12; 16:16
+			fill-color : #006400
+			line-color : #FFFFFF
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #006400
+			text : name
+			text-offset-vertical : 14
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : subway_station_b
+		define
+			shape : square
+			shape-size : 12:8; 14:12; 16:16
+			fill-color : #DAA520
+			line-color : #FFFFFF
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #DAA520
+			text : name
+			text-offset-vertical : 14
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : subway_station_c
+		define
+			shape : square
+			shape-size : 12:8; 14:12; 16:16
+			fill-color : #8B008B
+			line-color : #FFFFFF
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #8B008B
+			text : name
+			text-offset-vertical : 14
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : subway_station_d
+		define
+			shape : square
+			shape-size : 12:8; 14:12; 16:16
+			fill-color : #FFFFFF
+			line-color : #0000FF
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 12:11; 14:14; 16:16
+			font-weight : bold
+			text-color : #0000FF
+			text : name
+			text-offset-vertical : 14
+			text-halo-width : 2.5
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : taxi_rank
+		define
+			shape : square
+			shape-size : 11:8; 14:12; 16:16
+			fill-color : #FFD700
+			line-color : #222222
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:10; 14:14; 16:18
+			font-weight : bold
+			text-color : #222222
+			text : "TAXI"
+			text-offset-vertical : 24
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	target : bus_stop
+		define
+			shape : circle
+			shape-size : 11:4; 14:6; 16:9
+			fill-color : #FFFFFF
+			line-color : #444444
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:9; 14:11; 16:13
+			text-color : #222222
+			text : name
+			text-offset-vertical : 10
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : tram_stop_node
+		define
+			shape : circle
+			shape-size : 11:3; 14:5; 16:8
+			fill-color : #8B008B
+			line-color : #FFFFFF
+			line-width : 1.5
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:9; 14:11; 16:13
+			text-color : #8B008B
+			text : name
+			text-offset-vertical : 8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+
+	// ŽELEZNICE, LANOVKY A TRAJEKTY
+	target : railway_station_node
+		define
+			shape : square
+			shape-size : 11:6; 14:9; 16:12
+			fill-color : #DDDDDD
+			line-color : #000000
+			line-width : 2
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:10; 14:12; 16:14
+			font-weight : bold
+			text-color : #000000
+			text : name
+			text-offset-vertical : 10
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : railway_halt_node
+		define
+			shape : circle
+			shape-size : 11:4; 14:6; 16:8
+			fill-color : #FFFFFF
+			line-color : #000000
+			line-width : 1.5
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:9; 14:11; 16:12
+			text-color : #000000
+			text : name
+			text-offset-vertical : 8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : aerialway_station
+		define
+			shape : square
+			shape-size : 11:4; 14:6; 16:8
+			fill-color : #333333
+			line-color : #FFFFFF
+			line-width : 1.5
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:9; 14:11; 16:13
+			text-color : #333333
+			text : name
+			text-offset-vertical : 8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text
+		
+	target : ferry_terminal_public
+		define
+			shape : circle
+			shape-size : 11:4; 14:6; 16:8
+			fill-color : #0088FF
+			line-color : #FFFFFF
+			line-width : 1.5
+		draw : shape
+		define
+			font-family : Arial
+			font-size : 11:9; 14:11; 16:13
+			text-color : #0088FF
+			text : name
+			text-offset-vertical : 8
+			text-halo-width : 2
+			text-halo-color : #FFFFFF
+		draw : text

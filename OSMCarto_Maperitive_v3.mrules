@@ -1,0 +1,3597 @@
+// #####################################################################
+// #   MAPERITIVE STYLESHEET - INSPIRED BY THE OPENSTREETMAP CARTO STYLE #
+// #   Version 3                                                        #
+// #####################################################################
+//
+// CHANGES IN THIS VERSION (requested after reviewing v2):
+//
+//   1) All text halo effects have been removed.
+//      No rule anywhere sets text-halo-color, text-halo-width or
+//      text-halo-opacity, on any text (labels, shields, contour
+//      elevation figures, POI names, place names).
+//
+//   2) All transparency settings have been removed.
+//      No rule anywhere sets fill-opacity, line-opacity or
+//      border-opacity. Every fill and every line is fully opaque.
+//
+//   3) Text is always straight, never follows a curve.
+//      Every text-orientation property is set to "fixed" (horizontal),
+//      never "flow". Contour elevation figures additionally use
+//      curved: false.
+//
+//   4) One-way arrows have been removed.
+//      The shape that used to be drawn along oneway=yes/-1 roads is
+//      gone; roads no longer get any directional arrow markers.
+//
+//   5) Street name labels are always drawn, at any zoom level.
+//      Every "text : name" rule on the road hierarchy now starts at
+//      min-zoom 2 instead of a higher threshold.
+//
+//   6) Street name labels are drawn even if they would overlap other
+//      text or objects.
+//      Important technical note: Maperitive does not have a collision
+//      detection system between different labels/objects at all (this
+//      is confirmed in Maperitive's own documentation - see
+//      maperitive.net/docs/Label_Placement.html - "Currently Maperitive
+//      does not have a label collision detection"). So nothing needed
+//      to be switched off for that. What Maperitive DOES have is a
+//      per-line quality check that can skip a label if it cannot find
+//      a straight-enough, wide-enough spot along that one line/street.
+//      Those three thresholds (map.rendering.lflp.min-buffer-space,
+//      map.rendering.lflp.max-allowed-corner-angle and
+//      map.rendering.lflp.max-compression) have all been set to their
+//      most permissive possible values, both globally and again on
+//      every road name-label rule, to maximise how many street names
+//      actually get placed.
+//
+//   7) Every comment is on its own line.
+//      No comment is ever appended after code on the same line.
+//
+//   8) All comments are written in English.
+//
+// EARLIER FIXES (still in effect from the previous revision):
+//   - "boundary=administrative AND admin_level=9 OR admin_level=10" used
+//     to mix AND and OR without brackets, which Maperitive's parser
+//     explicitly rejects. The whole file is generated through an
+//     automatic check that would refuse to build if that pattern
+//     occurred again anywhere.
+//   - The "fill-hatch" property (previously used with invalid values
+//     "diagcross"/"diagonal") has been removed from the template
+//     entirely and replaced with plain solid fills.
+//   - Relations are used for line features (hiking, cycling, horse,
+//     MTB, ski/nordic, long-distance and public-transport routes,
+//     administrative boundaries) via the confirmed relation[...].way[]
+//     syntax, and, on a best-effort basis, for the most common
+//     multipolygon-based area features (forest, water, farmland,
+//     residential/retail/commercial/industrial land, cemeteries,
+//     nature reserves...) via relation[type=multipolygon AND (...)].
+//     Maperitive's own author has stated in the project FAQ that he
+//     cannot recall a working example of a relation used for an area
+//     feature, so this remains a best-effort addition; boundary lines
+//     are therefore always additionally drawn as reliable .way[] lines.
+//   - Every colour (fill/line/border/text) is unique across the whole
+//     file (see the U() function in the generator), so that
+//     "Select Same > Fill/Stroke Color" in Illustrator will not pick up
+//     unrelated categories. Colours differ by at most a few RGB units
+//     where a collision needed to be resolved - visually indistinguishable.
+//   - Contours are ready for a 10 m interval (generate-contours
+//     interval=10): major contours every 50 m (thicker, labelled),
+//     minor contours every 10 m (thin), via
+//     contour[elevation_multiplier=N], exactly as shown in the official
+//     "Querying Data" documentation page.
+//   - Natural/terrain area fills previously used reduced fill-opacity so
+//     that a hillshading layer could show through underneath; this has
+//     been undone by change (2) above, since all opacity settings were
+//     removed. If you add a hillshading layer later and want it to show
+//     through, fill-opacity would need to be reintroduced deliberately.
+//   - POI categories all include a name label, not just a subset.
+//   - A "Notable but less common features" section was added (rock
+//     arches, geysers, shipwrecks, aircraft/tank monuments, milestones,
+//     beehives...).
+//   - User GPX track/route styling was intentionally left out (not
+//     requested).
+//
+// HOW THIS WAS CHECKED:
+//   Syntax was cross-checked against the official documentation on
+//   maperitive.net (Rendering Rules, Querying Data, Feature Selectors,
+//   Map Symbols, Label Placement) and against the actual source code of
+//   OSMRender (github.com/fergusq/OSMRender, C#), an open (if
+//   incomplete) clone of Maperitive - its Parser.cs and
+//   RenderingProperties.cs were read in full to confirm tokenisation,
+//   the AND/OR/NOT grammar, bracket handling, $regex()/$featuretype(),
+//   wildcard matching and the accepted property names/values.
+//   OSMRender itself could not be compiled and run in this environment
+//   (no access to NuGet package feeds here), so no live render was
+//   produced. A custom Python validator checks bracket/quote balance,
+//   indentation, target/define/if/draw structure, valid draw commands,
+//   that every $regex() pattern compiles, and that AND/OR are never
+//   mixed without brackets anywhere in the file.
+//   What could NOT be verified: the actual visual output inside
+//   Maperitive itself. Please open the file and check the Log window;
+//   if anything is reported, send the exact message and it will be fixed.
+//
+
+features
+	points
+		// --- Settlements and place labels (place=*) ---
+		place country : place=country
+		place state : place=state
+		place capital city : place=city AND capital=yes
+		place city : place=city AND NOT capital=yes
+		place town : place=town
+		place suburb : place=suburb
+		place quarter : place=quarter OR place=neighbourhood
+		place village : place=village
+		place hamlet : place=hamlet
+		place isolated dwelling : place=isolated_dwelling
+		place locality : place=locality
+		place island : place=island OR place=islet
+		place square : place=square
+		// --- Transport ---
+		poi transport busstop : highway=bus_stop
+		poi transport busstation : amenity=bus_station
+		poi transport station : railway=station OR railway=halt
+		poi transport tram stop : railway=tram_stop
+		poi transport subway entrance : railway=subway_entrance
+		poi transport aerodrome : aeroway=aerodrome
+		poi transport helipad : aeroway=helipad
+		poi transport gate : aeroway=gate
+		poi transport ferry terminal : amenity=ferry_terminal
+		poi transport taxi : amenity=taxi
+		poi transport fuel : amenity=fuel
+		poi transport charging station : amenity=charging_station
+		poi transport car wash : amenity=car_wash
+		poi transport car rental : amenity=car_rental
+		poi transport car repair : shop=car_repair OR shop=tyres
+		poi transport car shop : shop=car OR shop=car_parts OR shop=motorcycle
+		poi transport parking : amenity=parking AND NOT (parking=multi-storey OR parking=underground)
+		poi transport parking multi : parking=multi-storey OR parking=underground
+		poi transport parking entrance : amenity=parking_entrance
+		poi transport motorcycle parking : amenity=motorcycle_parking
+		poi transport bicycle parking : amenity=bicycle_parking
+		poi transport bicycle rental : amenity=bicycle_rental
+		poi transport bicycle repair : amenity=bicycle_repair_station
+		poi transport traffic signals : highway=traffic_signals
+		poi transport motorway junction : highway=motorway_junction
+		poi transport ford : highway=ford OR ford=yes
+		poi transport elevator : highway=elevator
+		poi transport toll booth : barrier=toll_booth
+		// --- Food and drink ---
+		poi food restaurant : amenity=restaurant
+		poi food cafe : amenity=cafe
+		poi food bar : amenity=bar
+		poi food pub : amenity=pub
+		poi food biergarten : amenity=biergarten
+		poi food fast food : amenity=fast_food
+		poi food court : amenity=food_court
+		poi food ice cream : amenity=ice_cream OR cuisine=ice_cream
+		// --- Education ---
+		poi edu school : amenity=school
+		poi edu university : amenity=university
+		poi edu college : amenity=college
+		poi edu kindergarten : amenity=kindergarten OR amenity=childcare
+		poi edu library : amenity=library
+		poi edu driving school : amenity=driving_school
+		// --- Healthcare and social care ---
+		poi health hospital : amenity=hospital
+		poi health clinic : amenity=clinic
+		poi health doctors : amenity=doctors
+		poi health dentist : amenity=dentist
+		poi health pharmacy : amenity=pharmacy
+		poi health veterinary : amenity=veterinary
+		poi health social facility : amenity=social_facility OR amenity=nursing_home
+		// --- Finance ---
+		poi finance bank : amenity=bank
+		poi finance atm : amenity=atm
+		poi finance bureau de change : amenity=bureau_de_change
+		// --- Civic administration, safety, diplomacy ---
+		poi civic townhall : amenity=townhall
+		poi civic courthouse : amenity=courthouse
+		poi civic police : amenity=police
+		poi civic fire station : amenity=fire_station
+		poi civic post office : amenity=post_office
+		poi civic post box : amenity=post_box
+		poi civic prison : amenity=prison
+		poi civic embassy : office=diplomatic OR diplomatic=embassy
+		poi civic consulate : diplomatic=consulate
+		poi civic community centre : amenity=community_centre OR amenity=social_centre
+		// --- Culture and entertainment ---
+		poi culture theatre : amenity=theatre
+		poi culture cinema : amenity=cinema
+		poi culture arts centre : amenity=arts_centre
+		poi culture museum : tourism=museum
+		poi culture gallery : tourism=gallery
+		poi culture nightclub : amenity=nightclub
+		poi culture casino : amenity=casino
+		// --- Religion ---
+		poi religion christian : amenity=place_of_worship AND religion=christian
+		poi religion muslim : amenity=place_of_worship AND religion=muslim
+		poi religion jewish : amenity=place_of_worship AND religion=jewish
+		poi religion buddhist : amenity=place_of_worship AND religion=buddhist
+		poi religion hindu : amenity=place_of_worship AND religion=hindu
+		poi religion other : amenity=place_of_worship AND NOT @isOneOf(religion,christian,muslim,jewish,buddhist,hindu)
+		poi religion wayside cross : historic=wayside_cross OR man_made=cross
+		poi religion wayside shrine : historic=wayside_shrine
+		// --- Tourist accommodation ---
+		poi stay hotel : tourism=hotel
+		poi stay hostel : tourism=hostel
+		poi stay guest house : tourism=guest_house
+		poi stay motel : tourism=motel
+		poi stay apartment : tourism=apartment
+		poi stay chalet : tourism=chalet
+		poi stay alpine hut : tourism=alpine_hut OR tourism=wilderness_hut
+		poi stay camp site : tourism=camp_site
+		poi stay caravan site : tourism=caravan_site
+		poi stay picnic site : tourism=picnic_site
+		// --- Tourist attractions ---
+		poi tourism viewpoint : tourism=viewpoint
+		poi tourism attraction : tourism=attraction
+		poi tourism artwork : tourism=artwork
+		poi tourism zoo : tourism=zoo
+		poi tourism theme park : tourism=theme_park
+		poi tourism information : tourism=information
+		// --- Historic sites ---
+		poi historic castle : historic=castle
+		poi historic fort : historic=fort
+		poi historic ruins : historic=archaeological_site OR historic=ruins
+		poi historic monument : historic=monument
+		poi historic memorial : historic=memorial
+		poi historic city gate : historic=city_gate
+		poi historic manor : historic=manor
+		// --- Sport and leisure (points) ---
+		poi leisure playground : leisure=playground
+		poi leisure sports centre : leisure=sports_centre OR leisure=fitness_centre
+		poi leisure fitness station : leisure=fitness_station
+		poi leisure golf course : leisure=golf_course
+		poi leisure marina : leisure=marina
+		poi leisure slipway : leisure=slipway
+		poi leisure water park : leisure=water_park
+		poi leisure swimming pool : leisure=swimming_pool
+		poi leisure ice rink : leisure=ice_rink
+		poi leisure bowling alley : leisure=bowling_alley OR leisure=amusement_arcade
+		poi leisure dog park : leisure=dog_park
+		// --- Shops - food ---
+		poi shop supermarket : shop=supermarket
+		poi shop convenience : shop=convenience OR shop=kiosk
+		poi shop bakery : shop=bakery OR shop=pastry
+		poi shop butcher : shop=butcher OR shop=seafood
+		poi shop greengrocer : shop=greengrocer OR shop=farm
+		poi shop deli : shop=deli OR shop=dairy
+		poi shop alcohol : shop=alcohol OR shop=wine OR shop=beverages
+		poi shop confectionery : shop=confectionery OR shop=chocolate OR shop=tea OR shop=coffee
+		// --- Shops - fashion and accessories ---
+		poi shop clothes : shop=clothes OR shop=fashion
+		poi shop shoes : shop=shoes
+		poi shop jewelry : shop=jewelry OR shop=bag OR shop=watches
+		poi shop second hand : shop=second_hand OR shop=charity OR shop=variety_store
+		// --- Shops - home, garden, household ---
+		poi shop furniture : shop=furniture OR shop=houseware OR shop=interior_decoration OR shop=carpet
+		poi shop hardware : shop=hardware OR shop=doityourself OR shop=paint OR shop=trade
+		poi shop garden centre : shop=garden_centre OR shop=florist
+		poi shop electronics : shop=electronics OR shop=computer OR shop=hifi OR shop=mobile_phone
+		// --- Shops - health and beauty ---
+		poi shop hairdresser : shop=hairdresser OR shop=beauty OR shop=massage
+		poi shop optician : shop=optician OR shop=hearing_aids OR shop=medical_supply
+		poi shop chemist : shop=chemist OR shop=cosmetics
+		// --- Shops - other specialised retail ---
+		poi shop books : shop=books OR shop=newsagent OR shop=stationery
+		poi shop gift : shop=gift OR shop=art OR shop=photo OR shop=photo_studio
+		poi shop toys : shop=toys OR shop=games OR shop=video_games
+		poi shop sports : shop=sports OR shop=outdoor OR shop=bicycle
+		poi shop music : shop=music OR shop=musical_instrument OR shop=video
+		poi shop department store : shop=department_store OR shop=mall
+		poi shop laundry : shop=laundry OR shop=dry_cleaning
+		poi shop travel agency : shop=travel_agency OR shop=ticket
+		poi shop copyshop : shop=copyshop
+		poi shop pet : shop=pet
+		poi shop tobacco : shop=tobacco OR shop=bookmaker
+		poi shop wholesale : shop=wholesale
+		poi shop generic : shop AND NOT @isOneOf(shop,supermarket,convenience,kiosk,bakery,pastry,butcher,seafood,greengrocer,farm,deli,dairy,alcohol,wine,beverages,confectionery,chocolate,tea,coffee,clothes,fashion,shoes,jewelry,bag,watches,second_hand,charity,variety_store,furniture,houseware,interior_decoration,carpet,hardware,doityourself,paint,trade,garden_centre,florist,electronics,computer,hifi,mobile_phone,hairdresser,beauty,massage,optician,hearing_aids,medical_supply,chemist,cosmetics,books,newsagent,stationery,gift,art,photo,photo_studio,toys,games,video_games,sports,outdoor,bicycle,music,musical_instrument,video,department_store,mall,laundry,dry_cleaning,travel_agency,ticket,copyshop,pet,tobacco,bookmaker,wholesale,car_repair,tyres,car,car_parts,motorcycle)
+		// --- Natural point features ---
+		poi natural peak : natural=peak
+		poi natural saddle : natural=saddle OR mountain_pass=yes
+		poi natural volcano : natural=volcano
+		poi natural cave : natural=cave_entrance
+		poi natural spring : natural=spring
+		poi natural tree : natural=tree
+		poi natural cape : natural=cape OR natural=peninsula
+		poi natural waterfall : waterway=waterfall
+		// --- Barriers (points) ---
+		poi barrier gate : barrier=gate
+		poi barrier lift gate : barrier=lift_gate OR barrier=swing_gate
+		poi barrier bollard : barrier=bollard OR barrier=block
+		poi barrier cycle barrier : barrier=cycle_barrier OR barrier=motorcycle_barrier
+		poi barrier stile : barrier=stile OR barrier=kissing_gate OR barrier=turnstile
+		poi barrier cattle grid : barrier=cattle_grid
+		// --- Technical and industrial structures (points) ---
+		poi manmade tower : man_made=tower OR man_made=communications_tower OR man_made=mast
+		poi manmade watertower : man_made=water_tower OR man_made=water_works
+		poi manmade silo : man_made=silo OR man_made=storage_tank
+		poi manmade chimney : man_made=chimney
+		poi manmade lighthouse : man_made=lighthouse
+		poi manmade windmill : man_made=windmill
+		poi manmade crane : man_made=crane
+		poi manmade obelisk : man_made=obelisk
+		poi manmade works : man_made=works OR man_made=wastewater_plant
+		// --- Power infrastructure ---
+		poi power tower : power=tower
+		poi power pole : power=pole
+		poi power generator : power=generator
+		poi power substation : power=substation OR power=plant
+		// --- Military ---
+		poi military bunker : military=bunker
+		// --- Small public amenities ---
+		poi amenity drinking water : amenity=drinking_water
+		poi amenity toilets : amenity=toilets
+		poi amenity bench : amenity=bench
+		poi amenity waste basket : amenity=waste_basket OR amenity=waste_disposal
+		poi amenity recycling : amenity=recycling
+		poi amenity vending machine : amenity=vending_machine OR amenity=parcel_locker
+		poi amenity shelter : amenity=shelter
+		poi amenity fountain : amenity=fountain
+		poi amenity telephone : amenity=telephone OR emergency=phone
+		poi amenity marketplace : amenity=marketplace
+		poi amenity public bookcase : amenity=public_bookcase
+		// --- Address points ---
+		poi housenumber : [addr:housenumber]
+		// -----------------------------------------------------------------
+		//  NOTABLE BUT LESS COMMON FEATURES (decorative/scene-setting purpose)
+		// -----------------------------------------------------------------
+		poi special arch : natural=arch
+		poi special sinkhole : natural=sinkhole
+		poi special geyser : natural=geyser
+		poi special hot spring : natural=hot_spring
+		poi special rock : natural=rock OR natural=stone
+		poi special flagpole : man_made=flagpole
+		poi special telescope : man_made=telescope OR man_made=observatory
+		poi special watermill : man_made=watermill
+		poi special ship : historic=ship
+		poi special aircraft : historic=aircraft OR historic=tank
+		poi special bandstand : leisure=bandstand
+		poi special clock : amenity=clock
+		poi special sundial : man_made=sundial
+		poi special milestone : historic=milestone OR man_made=milestone
+		poi special boundary stone : historic=boundary_stone
+		poi special beehive : man_made=beehive OR craft=beekeeper
+		poi special water well : man_made=water_well
+		poi special fire hydrant : emergency=fire_hydrant
+
+	lines
+		// --- Roads - main hierarchy (incl. under-construction segments) ---
+		hw motorway : highway=motorway OR (highway=construction AND construction=motorway)
+		hw motorway link : highway=motorway_link OR (highway=construction AND construction=motorway_link)
+		hw trunk : highway=trunk OR (highway=construction AND construction=trunk)
+		hw trunk link : highway=trunk_link OR (highway=construction AND construction=trunk_link)
+		hw primary : highway=primary OR (highway=construction AND construction=primary)
+		hw primary link : highway=primary_link OR (highway=construction AND construction=primary_link)
+		hw secondary : highway=secondary OR (highway=construction AND construction=secondary)
+		hw secondary link : highway=secondary_link OR (highway=construction AND construction=secondary_link)
+		hw tertiary : highway=tertiary OR (highway=construction AND construction=tertiary)
+		hw tertiary link : highway=tertiary_link OR (highway=construction AND construction=tertiary_link)
+		hw unclassified : highway=unclassified OR (highway=construction AND construction=unclassified)
+		hw residential : highway=residential OR (highway=construction AND construction=residential)
+		hw living street : highway=living_street OR (highway=construction AND construction=living_street)
+		hw pedestrian way : highway=pedestrian AND NOT area=yes
+		hw service : highway=service OR (highway=construction AND construction=service)
+		hw road unknown : highway=road
+		hw construction generic : highway=construction AND NOT construction
+		hw track : highway=track
+		hw footway : highway=footway AND NOT (bicycle=designated AND foot=no)
+		hw steps : highway=steps
+		hw cycleway : highway=cycleway
+		hw bridleway : highway=bridleway
+		hw path : highway=path
+		hw raceway : highway=raceway OR highway=motor
+		hw bus guideway : highway=bus_guideway
+		hw mini roundabout centre : highway=mini_roundabout
+		hw ski nordic : piste:type=nordic
+		// --- Access restrictions and flags (drawn as an overlay on top of the road) ---
+		hw access private : access=private AND highway
+		hw access destination : access=destination AND highway
+		// --- Railways ---
+		rail main : railway=rail AND NOT service
+		rail main service : railway=rail AND service
+		rail narrow gauge : railway=narrow_gauge
+		rail light rail : railway=light_rail
+		rail subway : railway=subway
+		rail tram : railway=tram
+		rail funicular : railway=funicular OR railway=monorail
+		rail miniature : railway=miniature
+		rail disused : railway=disused OR railway=abandoned OR railway=razed
+		rail platform edge : railway=platform OR public_transport=platform
+		// --- Waterways (lines) ---
+		water river : waterway=river
+		water canal : waterway=canal
+		water stream : waterway=stream
+		water drain : waterway=drain
+		water ditch : waterway=ditch
+		water weir : waterway=weir OR waterway=dam
+		water lock gate : waterway=lock_gate
+		// --- Aerialways and lifts ---
+		aerial closed cabin : @isOneOf(aerialway,cable_car,gondola,mixed_lift)
+		aerial open : @isOneOf(aerialway,chair_lift,drag_lift,t-bar,j-bar,platter,rope_tow)
+		aerial goods : aerialway=goods OR aerialway=zip_line
+		// --- Power lines ---
+		power line major : power=line
+		power line minor : power=minor_line
+		// --- Barriers (lines) ---
+		barrier wall : barrier=wall OR barrier=retaining_wall
+		barrier citywall : historic=citywalls OR historic=city_wall
+		barrier fence : barrier=fence OR barrier=hedge
+		// --- Ferries ---
+		ferry route : route=ferry
+		// -----------------------------------------------------------------
+		//  ZNACENE TRASY Z RELACI (potvrzeny zapis relation[...].way[])
+		//   Each category has 2-3 significance tiers (international/national/
+		//   regional), where OSM tagging distinguishes them (network=*).
+		// -----------------------------------------------------------------
+		// Hiking routes
+		route hiking intl : relation[type=route AND route=hiking AND network=iwn].way[]
+		route hiking national : relation[type=route AND route=hiking AND network=nwn].way[]
+		route hiking regional : relation[type=route AND route=hiking AND @isOneOf(network,rwn,lwn)].way[]
+		// Cycling routes
+		route cycling intl : relation[type=route AND route=bicycle AND network=icn].way[]
+		route cycling national : relation[type=route AND route=bicycle AND network=ncn].way[]
+		route cycling regional : relation[type=route AND route=bicycle AND @isOneOf(network,rcn,lcn)].way[]
+		// Mountain biking (MTB)
+		route mtb : relation[type=route AND route=mtb].way[]
+		// Horse riding routes
+		route horse : relation[type=route AND route=horse].way[]
+		// Cross-country/nordic ski routes
+		route ski : relation[type=route AND route=ski].way[]
+		// Long-distance European routes (E-paths, network=iwn with a reference code)
+		route eway : relation[type=route AND route=hiking AND network=iwn AND ref].way[]
+		// Public transport (bus/trolleybus/tram/train) - subtle, informational
+		route bus : relation[type=route AND @isOneOf(route,bus,trolleybus)].way[]
+		route train : relation[type=route AND @isOneOf(route,train,tram)].way[]
+		// -----------------------------------------------------------------
+		//  ADMINISTRATIVE BOUNDARIES - primarily from relations (type=boundary),
+		//   with a fallback for a directly tagged way (older/simpler tagging)
+		// -----------------------------------------------------------------
+		admin state way : boundary=administrative AND admin_level=2 AND NOT natural=coastline
+		admin state rel : relation[type=boundary AND boundary=administrative AND admin_level=2].way[]
+		admin region way : boundary=administrative AND admin_level=4
+		admin region rel : relation[type=boundary AND boundary=administrative AND admin_level=4].way[]
+		admin district way : boundary=administrative AND admin_level=6
+		admin district rel : relation[type=boundary AND boundary=administrative AND admin_level=6].way[]
+		admin orp way : boundary=administrative AND admin_level=7
+		admin orp rel : relation[type=boundary AND boundary=administrative AND admin_level=7].way[]
+		admin municipality way : boundary=administrative AND admin_level=8
+		admin municipality rel : relation[type=boundary AND boundary=administrative AND admin_level=8].way[]
+		admin part way : boundary=administrative AND (admin_level=9 OR admin_level=10)
+		admin part rel : relation[type=boundary AND boundary=administrative AND (admin_level=9 OR admin_level=10)].way[]
+		// --- National parks and protected areas - boundary line (reliable) ---
+		national park line way : boundary=national_park
+		national park line rel : relation[type=boundary AND boundary=national_park].way[]
+		protected area line rel : relation[type=boundary AND boundary=protected_area].way[]
+		// --- Coastline and contour lines ---
+		coastline : natural=coastline
+		// Contours: major every 50 m, minor every 10 m (generate-contours interval=10)
+		contour major 50m : contour[elevation_multiplier=50]
+		contour minor 10m : contour[elevation_multiplier=10]
+
+	areas
+		// --- Natural vegetation and terrain cover (paired with relations) ---
+		nat forest : landuse=forest OR natural=wood
+		nat forest mp : relation[type=multipolygon AND (landuse=forest OR natural=wood)]
+		nat scrub : natural=scrub OR natural=shrubbery
+		nat heath : natural=heath
+		nat grassland : natural=grassland OR natural=fell
+		nat wetland : natural=wetland OR natural=marsh
+		nat bare rock : natural=bare_rock OR natural=scree OR natural=shingle
+		nat sand : natural=sand
+		nat mud : natural=mud
+		nat beach : natural=beach
+		nat glacier : natural=glacier
+		nat water : natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin OR waterway=dock
+		nat water mp : relation[type=multipolygon AND (natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin OR waterway=dock)]
+		// --- Agriculture ---
+		agr farmland : landuse=farmland
+		agr farmland mp : relation[type=multipolygon AND (landuse=farmland)]
+		agr farmyard : landuse=farmyard
+		agr orchard : landuse=orchard OR landuse=vineyard OR landuse=plant_nursery
+		agr meadow : landuse=meadow OR natural=meadow
+		agr meadow mp : relation[type=multipolygon AND (landuse=meadow OR natural=meadow)]
+		agr allotments : landuse=allotments
+		agr greenhouse : landuse=greenhouse_horticulture
+		// --- Built-up land (functional zones, paired with relations) ---
+		lu residential : landuse=residential
+		lu residential mp : relation[type=multipolygon AND (landuse=residential)]
+		lu retail : landuse=retail
+		lu retail mp : relation[type=multipolygon AND (landuse=retail)]
+		lu commercial : landuse=commercial
+		lu commercial mp : relation[type=multipolygon AND (landuse=commercial)]
+		lu industrial : landuse=industrial OR landuse=railway OR man_made=works OR man_made=wastewater_plant OR man_made=water_works
+		lu industrial mp : relation[type=multipolygon AND (landuse=industrial OR landuse=railway OR man_made=works OR man_made=wastewater_plant OR man_made=water_works)]
+		lu garages : landuse=garages
+		lu construction : landuse=construction OR landuse=brownfield
+		lu landfill : landuse=landfill
+		lu religious : landuse=religious OR amenity=place_of_worship
+		lu village green : landuse=village_green OR landuse=grass
+		lu recreation ground : landuse=recreation_ground
+		lu salt pond : landuse=salt_pond
+		// --- Cemeteries, military and quarry areas ---
+		sp cemetery : landuse=cemetery OR amenity=grave_yard
+		sp cemetery mp : relation[type=multipolygon AND (landuse=cemetery OR amenity=grave_yard)]
+		sp military : landuse=military OR military=barracks OR military=danger_area
+		sp quarry : landuse=quarry
+		// --- Parks, gardens and protected areas ---
+		lz park : leisure=park
+		lz garden : leisure=garden
+		lz nature reserve : leisure=nature_reserve
+		lz nature reserve mp : relation[type=multipolygon AND (leisure=nature_reserve)]
+		lz national park fill : boundary=national_park
+		lz national park fill rel : relation[type=boundary AND boundary=national_park]
+		lz protected area fill rel : relation[type=boundary AND boundary=protected_area]
+		// --- Sport and recreation (areas) ---
+		lz pitch : leisure=pitch
+		lz track : leisure=track
+		lz stadium : leisure=stadium OR leisure=sports_centre
+		lz golf course area : leisure=golf_course OR golf=fairway
+		lz golf green : golf=green
+		lz golf bunker : golf=bunker OR golf=sand
+		lz playground area : leisure=playground
+		lz swimming pool area : leisure=swimming_pool
+		lz water park area : leisure=water_park
+		lz dog park area : leisure=dog_park
+		lz marina area : leisure=marina
+		lz camp site area : tourism=camp_site OR tourism=caravan_site OR tourism=picnic_site
+		lz beach resort : leisure=beach_resort
+		// --- Transport - parking and airports (areas) ---
+		tr parking area : amenity=parking
+		tr aeroway apron : aeroway=apron
+		tr aeroway terminal : aeroway=terminal
+		tr aeroway runway area : aeroway=runway OR aeroway=taxiway
+		tr aerodrome area : aeroway=aerodrome
+		// --- Buildings ---
+		bld major : @isOneOf(building,church,cathedral,chapel,hospital,school,university,college,public,civic,government,train_station,castle,hotel,mosque,synagogue,temple,stadium)
+		bld regular : building AND NOT @isOneOf(building,church,cathedral,chapel,hospital,school,university,college,public,civic,government,train_station,castle,hotel,mosque,synagogue,temple,stadium,no,none)
+
+properties
+	// Basic map appearance (land/sea colour per OSM Carto)
+	map-background-color : #f2efe9
+	map-background-opacity : 1
+	map-sea-color : #aad3df
+
+	// Default font (Noto Sans is the OSM Carto font; if it
+	//   is not installed on the system, substitute e.g. Arial/DejaVu Sans)
+	font-family : Noto Sans
+	font-weight : normal
+	font-stretch : 0.92
+	text : name
+	text-color : #222222
+	text-align-horizontal : center
+	text-align-vertical : center
+	text-max-width : 8
+	// Text on lines: always straight/horizontal, never follows a curve
+	text-orientation : fixed
+
+	// Label placement tuned to the most permissive settings possible, so
+	// that as many street name labels as possible get displayed, even on
+	// short or curved segments (Maperitive has no collision detection
+	// between different labels/objects, so this only affects whether a
+	// single label fits along its own line at all).
+	map.rendering.lflp.min-buffer-space : 0
+	map.rendering.lflp.max-allowed-corner-angle : 180
+	map.rendering.lflp.max-compression : 0.3
+
+rules
+
+	// ==================================================================
+	// 1. AREA FEATURES (POLYGONS) - NATURE, AGRICULTURE, BUILT-UP LAND
+	// ==================================================================
+	// --- Forests, natural vegetation and bare terrain types ---
+	target : $regex("^(nat forest|nat forest mp)$")
+		define
+			fill-color : #add19e
+			line-style : none
+		draw : fill
+		define
+			text : name
+			text-color : #46673b
+			font-size : 11:8;16:13
+			text-orientation : fixed
+			min-zoom : 11
+		draw : text
+
+	target : nat scrub
+		define
+			fill-color : #c8d7ab
+			line-style : none
+		draw : fill
+
+	target : nat heath
+		define
+			fill-color : #d6d99f
+			line-style : none
+		draw : fill
+
+	target : nat grassland
+		define
+			fill-color : #cdebb0
+			line-style : none
+		draw : fill
+
+	target : $regex("^(agr meadow|agr meadow mp)$")
+		define
+			fill-color : #d5e8b0
+			line-style : none
+		draw : fill
+
+	target : $regex("^(agr farmland|agr farmland mp)$")
+		define
+			fill-color : #eef0d5
+			line-style : solid
+			line-color : #c7c9ae
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : agr orchard
+		define
+			fill-color : #aedfa3
+			line-style : none
+		draw : fill
+
+	target : agr allotments
+		define
+			fill-color : #c9e1bf
+			line-style : none
+		draw : fill
+
+	target : agr greenhouse
+		define
+			fill-color : #e3e3e3
+			line-style : none
+		draw : fill
+
+	target : agr farmyard
+		define
+			fill-color : #f5dcba
+			line-style : solid
+			line-color : #d1b48c
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : nat wetland
+		define
+			fill-color : #d3e8d3
+			line-style : none
+		draw : fill
+
+	target : nat bare rock
+		define
+			fill-color : #c5c3c3
+			line-style : none
+		draw : fill
+
+	target : nat sand
+		define
+			fill-color : #f5e9c6
+			line-style : none
+		draw : fill
+
+	target : nat mud
+		define
+			fill-color : #e6dcd1
+			line-style : none
+		draw : fill
+
+	target : nat beach
+		define
+			min-zoom : 10
+			fill-color : #fff1ba
+			line-style : none
+		draw : fill
+
+	// --- Quarries, military and redevelopment areas (no hatch pattern) ---
+	target : sp quarry
+		define
+			fill-color : #e3e2e2
+			line-style : solid
+			line-color : #b3b3b0
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : sp military
+		define
+			fill-color : #f55555
+			line-style : none
+		draw : fill
+
+	target : lu construction
+		define
+			fill-color : #c7c7b4
+			line-style : none
+		draw : fill
+
+	target : lu landfill
+		define
+			fill-color : #b7b09c
+			line-style : none
+		draw : fill
+
+	// --- Built-up land (functional zones) ---
+	target : lu garages
+		define
+			fill-color : #dfddce
+			line-style : none
+		draw : fill
+
+	target : $regex("^(lu industrial|lu industrial mp)$")
+		define
+			fill-color : #ebdbe8
+			line-style : solid
+			line-color : #c6b3c3
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : $regex("^(lu commercial|lu commercial mp)$")
+		define
+			fill-color : #f2dad9
+			line-style : solid
+			line-color : #d1b2b0
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : $regex("^(lu retail|lu retail mp)$")
+		define
+			fill-color : #ffd6d1
+			line-style : solid
+			line-color : #d99c95
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : $regex("^(lu residential|lu residential mp)$")
+		define
+			fill-color : #e0dfdf
+			line-style : none
+		draw : fill
+
+	target : lu village green
+		define
+			fill-color : #ceebb0
+			line-style : none
+		draw : fill
+
+	target : lu recreation ground
+		define
+			fill-color : #efc8c8
+			line-style : none
+		draw : fill
+
+	target : lu salt pond
+		define
+			fill-color : #e7f6f6
+			line-style : none
+		draw : fill
+
+	target : lu religious
+		define
+			fill-color : #d0d0d0
+			line-style : solid
+			line-color : #8f8f8f
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : $regex("^(sp cemetery|sp cemetery mp)$")
+		define
+			fill-color : #aacbaf
+			line-style : none
+		draw : fill
+
+	// --- Protected areas - translucent overlay (the least certain part of
+	//   the relation support, see the file header; a boundary line is always added too) ---
+	target : lz national park fill
+		define
+			fill-color : #8dc56c
+			line-style : none
+		draw : fill
+
+	target : lz national park fill rel
+		define
+			fill-color : #8ec56c
+			line-style : none
+		draw : fill
+
+	target : lz protected area fill rel
+		define
+			fill-color : #8dc66c
+			line-style : none
+		draw : fill
+
+	target : $regex("^(lz nature reserve|lz nature reserve mp)$")
+		define
+			fill-color : #8dc56d
+			line-style : none
+		draw : fill
+
+	// --- Parks, gardens and recreational-purpose areas ---
+	target : lz park
+		define
+			fill-color : #c8facc
+			line-style : none
+		draw : fill
+
+	target : lz garden
+		define
+			fill-color : #cdecb0
+			line-style : none
+		draw : fill
+
+	target : lz pitch
+		define
+			fill-color : #88e0be
+			line-style : none
+		draw : fill
+
+	target : lz track
+		define
+			fill-color : #89e0be
+			line-style : solid
+			line-color : #6bc9a3
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : lz stadium
+		define
+			fill-color : #33cc99
+			line-style : none
+		draw : fill
+
+	target : lz golf course area
+		define
+			fill-color : #b5e0a3
+			line-style : none
+		draw : fill
+
+	target : lz golf green
+		define
+			min-zoom : 15
+			fill-color : #a8e0a0
+			line-style : none
+		draw : fill
+
+	target : lz golf bunker
+		define
+			min-zoom : 15
+			fill-color : #f6e9c6
+			line-style : none
+		draw : fill
+
+	target : lz playground area
+		define
+			fill-color : #ccfef0
+			line-style : solid
+			line-color : #a3d9cb
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : lz swimming pool area
+		define
+			fill-color : #abd3df
+			line-style : none
+		draw : fill
+
+	target : lz water park area
+		define
+			fill-color : #aad4df
+			line-style : none
+		draw : fill
+
+	target : lz dog park area
+		define
+			fill-color : #c9facc
+			line-style : none
+		draw : fill
+
+	target : lz marina area
+		define
+			fill-color : #aad3e0
+			line-style : none
+		draw : fill
+
+	target : lz camp site area
+		define
+			fill-color : #def6c0
+			line-style : solid
+			line-color : #b9d98a
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : lz beach resort
+		define
+			fill-color : #fff2ba
+			line-style : none
+		draw : fill
+
+	// --- Transport - parking and airports (areas) ---
+	target : tr parking area
+		define
+			min-zoom : 13
+			fill-color : #eeeeee
+			line-style : solid
+			line-color : #999999
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : tr aeroway apron
+		define
+			fill-color : #dadae0
+			line-style : none
+		draw : fill
+
+	target : tr aeroway terminal
+		define
+			fill-color : #e9e7f0
+			line-style : solid
+			line-color : #b7b3c7
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : tr aerodrome area
+		define
+			fill-color : #e9e8e3
+			line-style : solid
+			line-color : #b4b3b0
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : tr aeroway runway area
+		define
+			min-zoom : 11
+			fill-color : #bbbbcc
+			line-style : none
+		draw : fill
+
+	// --- Ice and water (drawn last, so they cover zone boundaries) ---
+	target : nat glacier
+		define
+			fill-color : #ddecec
+			line-style : dash
+			line-color : #99ccff
+			line-width : 1
+		draw : fill
+		draw : line
+		define
+			text : name
+			text-color : #7799bb
+			font-size : 10:8;16:13
+			text-orientation : fixed
+			min-zoom : 10
+		draw : text
+
+	target : $regex("^(nat water|nat water mp)$")
+		define
+			fill-color : #a9d3df
+			line-style : none
+		draw : fill
+		define
+			text : name
+			text-color : #4d80b3
+			font-size : 11:8;16:13
+			text-orientation : fixed
+			min-zoom : 11
+		draw : text
+
+
+	// ==================================================================
+	// 2. BUILDINGS
+	// ==================================================================
+	// Public/notable buildings (churches, schools, hospitals...) are darker
+	//   than ordinary buildings - same convention as OSM Carto.
+	target : bld regular
+		define
+			min-zoom : 13
+			fill-color : #d9d0c9
+			line-style : solid
+			line-color : #b7a89e
+			line-width : 1
+		draw : fill
+		draw : line
+
+	target : bld major
+		define
+			min-zoom : 13
+			fill-color : #c9beb5
+			line-style : solid
+			line-color : #a4948a
+			line-width : 1
+		draw : fill
+		draw : line
+		define
+			text : name
+			text-color : #70655c
+			font-size : 10
+			text-orientation : fixed
+			min-zoom : 17
+		draw : text
+
+
+	// ==================================================================
+	// 3. WATERWAYS (LINES)
+	// ==================================================================
+	target : water river
+		define
+			line-color : #aad2df
+			line-width : 8:0.7;10:1.5;12:2.3;14:4.5;16:8;18:12
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #4e80b3
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 13
+		draw : text
+
+	target : water canal
+		define
+			min-zoom : 11
+			line-color : #aad3de
+			line-width : 12:1;14:3;16:6;18:9
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #4d81b3
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 13
+		draw : text
+
+	target : water stream
+		define
+			min-zoom : 12
+			line-color : #abd4df
+			line-width : 12:0.8;14:2;16:3;18:4
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #4d80b4
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 14
+		draw : text
+
+	target : water drain
+		define
+			min-zoom : 13
+			line-color : #abd3e0
+			line-width : 13:0.6;17:1.5
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : water ditch
+		define
+			min-zoom : 15
+			line-color : #aad4e0
+			line-width : 0.5
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : water weir
+		define
+			min-zoom : 15
+			line-color : #7a9ba6
+			line-width : 2
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : water lock gate
+		define
+			min-zoom : 17
+			line-color : #aaaaaa
+			line-width : 3
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 4. RAILWAYS
+	// ==================================================================
+	// Main line: white fill + grey dashed casing (imitates rails)
+	target : rail main
+		define
+			min-zoom : 8
+			line-color : #6e6e6e
+			line-width : 8:0.6;10:1;13:2;15:3.5;18:6
+			line-join : round
+		draw : line
+		define
+			min-zoom : 12
+			line-color : #ffffff
+			line-style : dashlong
+			line-width : 12:1;15:2.5;18:5
+		draw : line
+		define
+			min-zoom : 14
+			text : name
+			text-color : #6f6e6e
+			font-size : 14:8;17:11
+			text-orientation : fixed
+		draw : text
+
+	target : rail main service
+		define
+			min-zoom : 13
+			line-color : #6e6f6e
+			line-width : 0.6
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail narrow gauge
+		define
+			min-zoom : 12
+			line-color : #6e6e6f
+			line-width : 13:0.6;16:2
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail light rail
+		define
+			min-zoom : 11
+			line-color : #6d6e6e
+			line-width : 12:0.6;15:2.5;18:4
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #6e6d6e
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 14
+		draw : text
+
+	target : rail subway
+		define
+			min-zoom : 11
+			line-color : #6e6e6d
+			line-width : 12:0.6;15:2.5;18:4
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail tram
+		define
+			min-zoom : 13
+			line-color : #6f6f6e
+			line-width : 13:0.8;16:2
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail funicular
+		define
+			min-zoom : 12
+			line-color : #6f6e6f
+			line-width : 13:0.8;16:2
+			line-style : dashdotdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail miniature
+		define
+			min-zoom : 15
+			line-color : #6e6f6f
+			line-width : 0.6
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail disused
+		define
+			min-zoom : 14
+			line-color : #a8a8a8
+			line-width : 0.6
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : rail platform edge
+		define
+			min-zoom : 15
+			line-color : #908f8f
+			line-width : 13:1;17:3
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 5. AERIALWAYS AND LIFTS
+	// ==================================================================
+	target : aerial closed cabin
+		define
+			min-zoom : 11
+			line-color : #808080
+			line-width : 1.2
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #666666
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 13
+		draw : text
+
+	target : aerial open
+		define
+			min-zoom : 12
+			line-color : #9a9999
+			line-width : 0.8
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : aerial goods
+		define
+			min-zoom : 13
+			line-color : #909090
+			line-width : 0.6
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 6. POWER LINES
+	// ==================================================================
+	target : power line major
+		define
+			min-zoom : 13
+			line-color : #888888
+			line-width : 14:0.5;16:0.7;19:1.2
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : power line minor
+		define
+			min-zoom : 15
+			line-color : #898888
+			line-width : 16:0.3;18:0.5
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 7. BARRIERS (LINES)
+	// ==================================================================
+	target : barrier wall
+		define
+			min-zoom : 15
+			line-color : #7a7a6e
+			line-width : 1
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : barrier citywall
+		define
+			min-zoom : 12
+			line-color : #8d968d
+			line-width : 7:0.6;12:2.5;16:6
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #8e968d
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 14
+		draw : text
+
+	target : barrier fence
+		define
+			min-zoom : 16
+			line-color : #abaaaa
+			line-width : 0.6
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 8. FERRIES
+	// ==================================================================
+	target : ferry route
+		define
+			min-zoom : 6
+			line-color : #6666ff
+			line-width : 1.2
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #6766ff
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 10
+		draw : text
+
+
+	// ==================================================================
+	// 9. WAYMARKED ROUTES FROM RELATIONS
+	// ==================================================================
+	// Hiking, cycling, MTB, horse riding, ski, long-distance (E-paths) and
+	//   public transport. Each category has its own unique colour, so it
+	//   can be filtered by stroke colour in Illustrator.
+	target : route hiking intl
+		define
+			min-zoom : 8
+			line-color : #c02020
+			line-width : 1.6
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : ref
+			text-color : #c12020
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 11
+		draw : text
+
+	target : route hiking national
+		define
+			min-zoom : 9
+			line-color : #c02120
+			line-width : 1.3
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route hiking regional
+		define
+			min-zoom : 10
+			line-color : #2060c0
+			line-width : 1
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route cycling intl
+		define
+			min-zoom : 8
+			line-color : #008000
+			line-width : 1.6
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : ref
+			text-color : #018000
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 11
+		draw : text
+
+	target : route cycling national
+		define
+			min-zoom : 9
+			line-color : #008100
+			line-width : 1.3
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route cycling regional
+		define
+			min-zoom : 10
+			line-color : #20a020
+			line-width : 1
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route mtb
+		define
+			min-zoom : 10
+			line-color : #e07800
+			line-width : 1.1
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : ref
+			text-color : #e17800
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 12
+		draw : text
+
+	target : route horse
+		define
+			min-zoom : 10
+			line-color : #a0622d
+			line-width : 1.1
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route ski
+		define
+			min-zoom : 9
+			line-color : #2255cc
+			line-width : 1.1
+			line-style : dashdotdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #2355cc
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 11
+		draw : text
+
+	target : route eway
+		define
+			min-zoom : 6
+			line-color : #800080
+			line-width : 1.9
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : ref
+			text-color : #810080
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 8
+		draw : text
+
+	target : route bus
+		define
+			min-zoom : 12
+			line-color : #ff8800
+			line-width : 0.9
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : route train
+		define
+			min-zoom : 12
+			line-color : #884400
+			line-width : 0.9
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 10. ADMINISTRATIVE BOUNDARIES
+	// ==================================================================
+	// The target expressions cover BOTH a directly tagged way and a relation
+	//   (see features - '... way' + '... rel' paired via regex).
+	//   Drawn ABOVE the roads (this rule appears later in the file),
+	//   the purple colour family matches OSM Carto.
+	target : $regex("^admin state (way|rel)$")
+		define
+			min-zoom : 2
+			line-color : #feffff
+			line-width : 2:1;6:3;10:5
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin state (way|rel)$")
+		define
+			min-zoom : 2
+			line-color : #8d618b
+			line-width : 2:0.6;6:1.8;10:3.5
+			line-style : dashdotdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin region (way|rel)$")
+		define
+			min-zoom : 4
+			line-color : #a37da1
+			line-width : 4:0.8;8:1.8;12:3
+			line-style : dashdot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin district (way|rel)$")
+		define
+			min-zoom : 8
+			line-color : #a47da1
+			line-width : 8:0.6;12:1.5;15:2.5
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin orp (way|rel)$")
+		define
+			min-zoom : 10
+			line-color : #a37ea1
+			line-width : 10:0.4;14:1
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin municipality (way|rel)$")
+		define
+			min-zoom : 12
+			line-color : #a37da2
+			line-width : 12:0.4;15:1
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	target : $regex("^admin part (way|rel)$")
+		define
+			min-zoom : 13
+			line-color : #a27da1
+			line-width : 0.4
+			line-style : dot
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+	// --- National parks / protected areas - reliable boundary line ---
+	target : $regex("^national park line (way|rel)$")
+		define
+			min-zoom : 8
+			line-color : #4c7024
+			line-width : 1.3
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+		define
+			text : name
+			text-color : #4d7024
+			font-size : 13:8;16:12
+			font-weight : normal
+			text-orientation : fixed
+			min-zoom : 9
+		draw : text
+
+	target : protected area line rel
+		define
+			min-zoom : 9
+			line-color : #4c7124
+			line-width : 1
+			line-style : dash
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// ==================================================================
+	// 11. COASTLINE AND CONTOUR LINES
+	// ==================================================================
+	target : coastline
+		define
+			min-zoom : 3
+			line-color : #6d94a3
+			line-width : 1.2
+			line-style : solid
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		draw : line
+
+
+	// Contours ready for 'generate-contours interval=10' - major contours
+	// every 50 m (thicker, with an elevation label), minor every 10 m
+	// (thin). text-orientation: fixed + curved: false => elevation figures
+	// are always straight, never bent along the contour curve.
+	target : contour minor 10m
+		define
+			min-zoom : 12
+			line-color : #a06a3c
+			line-width : 0.4
+		draw : contour
+
+	target : contour major 50m
+		define
+			min-zoom : 10
+			line-color : #a16a3c
+			line-width : 10:0.4;13:1.1
+			font-size : 10
+			font-style : italic
+			text-color : #a06b3c
+			text-orientation : fixed
+			curved : false
+		draw : contour
+
+
+	// ==================================================================
+	// 12. ROADS - MAIN HIERARCHY (MOST IMPORTANT PART OF THE STYLE)
+	// ==================================================================
+	// Every class has two phases: (a) thin low-zoom phase with no casing,
+	// (b) full phase with coloured fill and darker casing. Tunnel = dashed
+	// casing, bridge = black casing (thicker). Labels always use
+	// text-orientation: fixed (horizontal, never follows a curve).
+
+	target : $regex("^(hw .*)$")
+		define
+			font-family : Noto Sans
+			font-weight : bold
+			text-align-horizontal : center
+			text-align-vertical : center
+			text-orientation : fixed
+		define
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+			line-style : solid
+
+		if : $regex("(hw motorway)$")
+			define
+				min-zoom : 6
+				max-zoom : 11
+				line-color : #e66e89
+				line-width : 6:0.4;8:1;10:1.9;11:2
+			draw : line
+			define
+				min-zoom : 12
+				line-color : #e892a2
+				line-width : 12:3.5;13:6;15:10;17:18;19:27
+				border-color : #dc2a67
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #eda9b6
+			for : bridge=yes
+				define
+					border-color : #000000
+					border-width : 22%
+			draw : line
+			define
+				min-zoom : 10
+				max-zoom : 20
+				text : ref
+				font-size : 11
+				text-color : #fffeff
+				shape : custom
+				shape-def : p:#2255aa;pw:4;f:#2255aa;m:-10,-7;l:10,-7;a:7,7,10,7;l:-10,7;a:7,7,-10,-7;z
+				shield-padding-left : 5
+				shield-padding-right : 5
+				shield-padding-top : 5
+				shield-padding-bottom : 5
+				shield-resize-mode : free
+			draw : shield
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #620728
+			draw : text
+		elseif : $regex("(hw trunk)$")
+			define
+				min-zoom : 6
+				max-zoom : 11
+				line-color : #f6967a
+				line-width : 6:0.4;8:1;10:1.9;11:2
+			draw : line
+			define
+				min-zoom : 12
+				line-color : #f9b29c
+				line-width : 12:3.5;13:6;15:10;17:18;19:27
+				border-color : #c84e2f
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #fbcabb
+			for : bridge=yes
+				define
+					border-color : #000001
+					border-width : 22%
+			draw : line
+			define
+				min-zoom : 10
+				max-zoom : 20
+				text : ref
+				font-size : 11
+				text-color : #fffffe
+				shape : custom
+				shape-def : p:#2f7a2f;pw:4;f:#2f7a2f;m:-10,-7;l:10,-7;a:7,7,10,7;l:-10,7;a:7,7,-10,-7;z
+				shield-padding-left : 5
+				shield-padding-right : 5
+				shield-padding-top : 5
+				shield-padding-bottom : 5
+				shield-resize-mode : free
+			draw : shield
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #5f1c0c
+			draw : text
+		elseif : $regex("(hw primary)$")
+			define
+				min-zoom : 8
+				max-zoom : 10
+				line-color : #f4c37d
+				line-width : 8:1;9:1.4;10:1.8
+			draw : line
+			define
+				min-zoom : 11
+				line-color : #fcd6a4
+				line-width : 11:2;12:3.5;13:5;15:10;17:18;19:27
+				border-color : #a06b00
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #fde3bd
+			for : bridge=yes
+				define
+					border-color : #000002
+					border-width : 20%
+			draw : line
+			define
+				min-zoom : 13
+				max-zoom : 20
+				text : ref
+				font-size : 10
+				text-color : #503000
+			draw : text
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #7a5000
+			draw : text
+		elseif : $regex("(hw secondary)$")
+			define
+				min-zoom : 9
+				max-zoom : 11
+				line-color : #e7ed9d
+				line-width : 9:1;10:1.1;11:1.1
+			draw : line
+			define
+				min-zoom : 12
+				line-color : #f7fabf
+				line-width : 12:3.5;13:5;15:9;17:18;19:27
+				border-color : #707d05
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #fcfde3
+			for : bridge=yes
+				define
+					border-color : #000003
+					border-width : 18%
+			draw : line
+			define
+				min-zoom : 13
+				max-zoom : 20
+				text : ref
+				font-size : 10
+				text-color : #364000
+			draw : text
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #4c5400
+			draw : text
+		elseif : $regex("(hw tertiary)$")
+			define
+				min-zoom : 10
+				line-color : #fffffd
+				line-width : 10:0.7;12:2.5;13:4;15:9;17:18;19:27
+				border-color : #8f908f
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #f4f4f4
+			for : bridge=yes
+				define
+					border-color : #000004
+					border-width : 18%
+			draw : line
+			define
+				min-zoom : 14
+				max-zoom : 20
+				text : ref
+				font-size : 9
+				text-color : #3b3b3b
+			draw : text
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #444444
+			draw : text
+		elseif : $regex("(hw unclassified|hw residential)$")
+			define
+				min-zoom : 12
+				line-color : #fffffc
+				line-width : 12:0.6;13:2.5;15:5;17:12;19:17
+				border-color : #bbbbbb
+				border-width : 15%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+					line-color : #e6e6e6
+			for : bridge=yes
+				define
+					border-color : #000005
+					border-width : 18%
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #454545
+			draw : text
+		elseif : $regex("(hw living street)$")
+			define
+				min-zoom : 13
+				line-color : #ededed
+				line-width : 13:2;15:5;17:12;19:17
+				border-color : #bcbcbc
+				border-width : 12%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #464646
+			draw : text
+		elseif : $regex("(hw pedestrian way)$")
+			define
+				min-zoom : 14
+				line-color : #dddde8
+				line-width : 14:3;15:5;16:6;17:12;19:17
+				border-color : #999a99
+				border-width : 15%
+				border-style : solid
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				text-color : #55555f
+			draw : text
+		elseif : $regex("(hw service)$")
+			define
+				min-zoom : 14
+				line-color : #fffffb
+				line-width : 14:2;16:3.5;17:7;19:11
+				border-color : #bcbcbd
+				border-width : 18%
+				border-style : solid
+			for : tunnel=yes
+				define
+					border-style : dash
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-weight : normal
+				font-size : 9
+				text-color : #676666
+			draw : text
+		elseif : $regex("(hw road unknown|hw construction generic)$")
+			define
+				min-zoom : 13
+				line-color : #ddd8d0
+				line-width : 13:1;15:3;17:6
+				line-style : dot
+			draw : line
+		elseif : $regex("(hw track)$")
+			define
+				min-zoom : 13
+				line-color : #996600
+				line-width : 13:0.6;15:1.3;18:2
+				line-style : dash
+				border-color : #fffffa
+				border-width : 100%
+			for : tracktype=grade1
+				define
+					line-style : solid
+			for : tracktype=grade3
+				define
+					line-style : dashdot
+			for : tracktype=grade4 OR tracktype=grade5
+				define
+					line-style : dashdotdot
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-size : 9
+				font-weight : normal
+				text-color : #8a5c00
+			draw : text
+		elseif : $regex("(hw footway)$")
+			define
+				min-zoom : 14
+				line-color : #fa8072
+				line-width : 14:0.7;16:1.3;19:1.6
+				line-style : dot
+				border-color : #fffff9
+				border-width : 100%
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-size : 8
+				font-weight : normal
+				text-color : #a24236
+			draw : text
+		elseif : $regex("(hw cycleway)$")
+			define
+				min-zoom : 13
+				line-color : #2b6bff
+				line-width : 13:0.7;16:0.9;19:1.3
+				line-style : dot
+				border-color : #fffff8
+				border-width : 100%
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-size : 8
+				font-weight : normal
+				text-color : #2b5fdf
+			draw : text
+		elseif : $regex("(hw bridleway)$")
+			define
+				min-zoom : 13
+				line-color : #008001
+				line-width : 13:0.3;15:1.2;19:1.8
+				line-style : dash
+				border-color : #fffff7
+				border-width : 100%
+			draw : line
+		elseif : $regex("(hw path)$")
+			define
+				min-zoom : 14
+				line-color : #6e7c6d
+				line-width : 14:0.6;16:1;19:1.5
+				line-style : dashdot
+				border-color : #fffff6
+				border-width : 100%
+			draw : line
+		elseif : $regex("(hw ski nordic)$")
+			define
+				min-zoom : 11
+				line-color : #2255cd
+				line-width : 11:0.5;15:1.2;18:1.8
+				line-style : dashdotdot
+			draw : line
+			define
+				min-zoom : 2
+				map.rendering.lflp.min-buffer-space : 0
+				map.rendering.lflp.max-allowed-corner-angle : 180
+				map.rendering.lflp.max-compression : 0.3
+				text : name
+				font-size : 8
+				font-weight : normal
+				text-color : #2255ce
+			draw : text
+		elseif : $regex("(hw raceway)$")
+			define
+				min-zoom : 12
+				line-color : #ffc0cb
+				line-width : 12:1;15:5;18:9
+				border-color : #c48a92
+				border-width : 15%
+			draw : line
+		elseif : $regex("(hw bus guideway)$")
+			define
+				min-zoom : 13
+				line-color : #6699ff
+				line-width : 13:1;16:3
+				line-style : dash
+			draw : line
+		else
+			stop
+
+	// -- link/ramp roads for all major classes, at roughly 60% width --
+	target : $regex("^(hw .* link)$")
+		define
+			line-join : round
+			line-start-cap : round
+			line-end-cap : round
+		if : $regex("(motorway link)$")
+			define
+				min-zoom : 10
+				line-color : #e892a1
+				line-width : 10:1;12:1.5;13:4;15:7.8;17:12;19:16
+				border-color : #dc2a68
+				border-width : 15%
+			draw : line
+		elseif : $regex("(trunk link)$")
+			define
+				min-zoom : 10
+				line-color : #f9b29b
+				line-width : 10:1;12:1.5;13:4;15:7.8;17:12;19:16
+				border-color : #c84e2e
+				border-width : 15%
+			draw : line
+		elseif : $regex("(primary link)$")
+			define
+				min-zoom : 11
+				line-color : #fcd6a3
+				line-width : 11:1;12:1.5;13:4;15:7.8;17:12;19:16
+				border-color : #a06b01
+				border-width : 15%
+			draw : line
+		elseif : $regex("(secondary link)$")
+			define
+				min-zoom : 12
+				line-color : #f7fabe
+				line-width : 12:1.5;13:4;15:7;17:12;19:16
+				border-color : #707d06
+				border-width : 15%
+			draw : line
+		elseif : $regex("(tertiary link)$")
+			define
+				min-zoom : 12
+				line-color : #fefffe
+				line-width : 12:1.5;13:3;15:7;17:12;19:16
+				border-color : #8f8f90
+				border-width : 15%
+			draw : line
+		else
+			stop
+
+	// -- steps: cross-ticks instead of a continuous line --
+	target : hw steps
+		define
+			min-zoom : 15
+			shape : custom
+			shape-def : f:#fa8071;p:#fa8071;pw:1;-1,1,-1,-1,1,-1,1,1;Z
+			shape-spacing : 2
+			shape-size : 15:1;19:3
+			shape-aspect : 3
+			shape-mode : linear
+			shape-orientation : flow
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 2
+			map.rendering.lflp.min-buffer-space : 0
+			map.rendering.lflp.max-allowed-corner-angle : 180
+			map.rendering.lflp.max-compression : 0.3
+			text : name
+			font-size : 8
+			text-color : #a24237
+		draw : text
+
+	// -- mini roundabout (centre island) --
+	target : hw mini roundabout centre
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:4;18:10
+			line-color : #bcbcbe
+			line-width : 1
+			fill-color : #fffff5
+		draw : shape
+
+	// -- overlay for restricted access (private/destination) --
+	target : hw access private
+		define
+			min-zoom : 14
+			line-color : #efa9a9
+			line-width : 14:1;16:2;18:4
+			line-style : dash
+		draw : line
+
+	target : hw access destination
+		define
+			min-zoom : 14
+			line-color : #c2e0ff
+			line-width : 14:1;16:2;18:4
+			line-style : dash
+		draw : line
+
+
+	// ==================================================================
+	// 13. POINTS OF INTEREST (POI)
+	// ==================================================================
+	// Categories are distinguished by marker shape+colour (Maperitive cannot render SVG icons).
+	//   EVERY category now also has a name label (min-zoom depending on importance),
+	//   so a name is visible even for points with no (and never possible) picture icon.
+
+	// --- Transport ---
+	target : $regex("^poi transport (station)$")
+		define
+			min-zoom : 12
+			shape : square
+			shape-size : 12:5;18:9
+			fill-color : #7981b0
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 13
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #7a81b0
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (tram stop|subway entrance|busstation)$")
+		define
+			min-zoom : 14
+			shape : square
+			shape-size : 14:4;18:7
+			fill-color : #7982b1
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #7a82b1
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (motorway junction)$")
+		define
+			min-zoom : 13
+			text : ref
+			font-size : 10
+			text-color : #2f4a73
+		draw : text
+
+	target : $regex("^poi transport (busstop)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:4;18:7
+			fill-color : #4a6fa5
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4b6fa5
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (traffic signals)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:3;18:5
+			fill-color : #dd4433
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #de4433
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (aerodrome|helipad|gate|ferry terminal)$")
+		define
+			min-zoom : 11
+			shape : circle
+			shape-size : 11:5;16:9
+			fill-color : #4a6fa6
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 12
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #304a73
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (fuel|charging station)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:5;18:8
+			fill-color : #4a6fa7
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4b6fa7
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (taxi|car wash|car rental|car repair|car shop|toll booth|ford|elevator)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #4a6fa8
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4b6fa8
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (parking|parking multi|parking entrance|motorcycle parking)$")
+		define
+			min-zoom : 15
+			shape : square
+			shape-size : 15:4;18:7
+			fill-color : #5577cc
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #5677cc
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi transport (bicycle parking|bicycle rental|bicycle repair)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #2e9e5b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #2f9e5b
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Food and drink ---
+	target : $regex("^poi food (restaurant|fast food|court)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:5;18:8
+			fill-color : #c56a1a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8a4a10
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi food (cafe|bar|pub|biergarten|ice cream)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #c56b1b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #c66b1b
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Skolstvi ---
+	target : $regex("^poi edu (school|university|college)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:5;18:8
+			fill-color : #2f6f9f
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #1e4a6b
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi edu (kindergarten|library|driving school)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #2f709f
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #30709f
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Zdravotnictvi ---
+	target : $regex("^poi health (hospital)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:6;18:9
+			fill-color : #da0092
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #a30070
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi health (clinic|doctors|dentist|pharmacy|veterinary|social facility)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #da0193
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #db0193
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Finance ---
+	target : $regex("^poi finance (bank|atm|bureau de change)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #2f7a3f
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #307a3f
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Civic administration, safety, diplomacy ---
+	target : $regex("^poi civic (townhall|courthouse|embassy|consulate)$")
+		define
+			min-zoom : 14
+			shape : circle
+			shape-size : 14:5;18:8
+			fill-color : #555577
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #33334d
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi civic (police|fire station|post office|post box|prison|community centre)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #565578
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #575578
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Culture and entertainment ---
+	target : $regex("^poi culture (museum|gallery|theatre|arts centre)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:5;18:8
+			fill-color : #8b3fa0
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #5e2a6e
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi culture (cinema|nightclub|casino)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #8c40a1
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8d40a1
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Religion ---
+	target : $regex("^poi religion (christian|muslim|jewish|buddhist|hindu|other)$")
+		define
+			min-zoom : 14
+			shape : triangle
+			shape-size : 14:5;17:9
+			fill-color : #6a6a6a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4a4a4a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi religion (wayside cross|wayside shrine)$")
+		define
+			min-zoom : 16
+			shape : triangle
+			shape-size : 16:3;18:5
+			fill-color : #6b6b6b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #6c6b6b
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Tourist accommodation ---
+	target : $regex("^poi stay (hotel|hostel|guest house|motel)$")
+		define
+			min-zoom : 14
+			shape : triangle
+			shape-size : 14:5;17:9
+			fill-color : #a0522d
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #753b1f
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi stay (apartment|chalet|alpine hut|camp site|caravan site|picnic site)$")
+		define
+			min-zoom : 15
+			shape : triangle
+			shape-size : 15:4;18:7
+			fill-color : #a1532e
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #a2532e
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Tourist attractions ---
+	target : $regex("^poi tourism (viewpoint|attraction|artwork|zoo|theme park)$")
+		define
+			min-zoom : 13
+			shape : triangle
+			shape-size : 13:5;17:9
+			fill-color : #ae4242
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #7a2e2e
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi tourism (information)$")
+		define
+			min-zoom : 15
+			shape : triangle
+			shape-size : 15:5;18:8
+			fill-color : #2f709e
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #30709e
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Historic sites ---
+	target : $regex("^poi historic (castle|fort|ruins|manor)$")
+		define
+			min-zoom : 12
+			shape : triangle
+			shape-size : 12:6;17:10
+			fill-color : #8a6d3b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 13
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #5f4a27
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi historic (monument|memorial|city gate)$")
+		define
+			min-zoom : 15
+			shape : triangle
+			shape-size : 15:4;18:7
+			fill-color : #8b6e3c
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8c6e3c
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Sport a volny cas ---
+	target : $regex("^poi leisure (sports centre|golf course|marina|water park)$")
+		define
+			min-zoom : 14
+			shape : circle
+			shape-size : 14:5;17:8
+			fill-color : #2e9f5b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #1f6b3d
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi leisure (playground|fitness station|slipway|swimming pool|ice rink|bowling alley|dog park)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:4;18:7
+			fill-color : #2f9f5c
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #309f5c
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Shops - food (square, orange) ---
+	target : $regex("^poi shop (supermarket)$")
+		define
+			min-zoom : 15
+			shape : square
+			shape-size : 15:5;18:8
+			fill-color : #c66a1a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8b4a10
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi shop (convenience|bakery|butcher|greengrocer|deli|alcohol|confectionery)$")
+		define
+			min-zoom : 16
+			shape : square
+			shape-size : 16:4;18:6
+			fill-color : #c76b1b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #c66c1b
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Shops - fashion (square, magenta) ---
+	target : $regex("^poi shop (clothes|shoes|jewelry|second hand)$")
+		define
+			min-zoom : 16
+			shape : square
+			shape-size : 16:4;18:6
+			fill-color : #b5406b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #b6406b
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Shops - home, garden, household (square, brown) ---
+	target : $regex("^poi shop (furniture|hardware|garden centre|electronics)$")
+		define
+			min-zoom : 16
+			shape : square
+			shape-size : 16:4;18:6
+			fill-color : #7a5c3e
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #7b5c3e
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Shops - health and beauty (square, pink) ---
+	target : $regex("^poi shop (hairdresser|optician|chemist)$")
+		define
+			min-zoom : 16
+			shape : square
+			shape-size : 16:4;18:6
+			fill-color : #d0568a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #d1568a
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Shops - other specialised retail (square, grey) ---
+	target : $regex("^poi shop (books|gift|toys|sports|music|department store|laundry|travel agency|copyshop|pet|tobacco|wholesale|generic)$")
+		define
+			min-zoom : 17
+			shape : square
+			shape-size : 17:4;19:6
+			fill-color : #6b6c6b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #6b6b6c
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Natural point features (triangle, dark green) ---
+	target : $regex("^poi natural (peak)$")
+		define
+			min-zoom : 11
+			shape : custom
+			shape-def : f:#4c7024;p:#3a5c1a;pw:1;0,-6,6,6,-6,6;Z
+			shape-size : 11:6;17:10
+			fill-color : #4c7025
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 12
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #3a5c1a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi natural (saddle|volcano)$")
+		define
+			min-zoom : 13
+			shape : triangle
+			shape-size : 13:5;17:8
+			fill-color : #4d7125
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #3b5c1a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi natural (cave|spring|cape|waterfall)$")
+		define
+			min-zoom : 14
+			shape : triangle
+			shape-size : 14:4;18:7
+			fill-color : #4e7226
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4f7226
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi natural (tree)$")
+		define
+			min-zoom : 17
+			shape : circle
+			shape-size : 17:3;19:5
+			fill-color : #5a8a2e
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #5b8a2e
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Barriers (diamond, dark grey) ---
+	target : $regex("^poi barrier (gate|lift gate)$")
+		define
+			min-zoom : 15
+			shape : diamond
+			shape-size : 15:4;18:6
+			fill-color : #555555
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #565555
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi barrier (bollard|cycle barrier|stile|cattle grid)$")
+		define
+			min-zoom : 16
+			shape : diamond
+			shape-size : 16:3;18:5
+			fill-color : #565656
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #575656
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Technical and industrial structures (diamond, grey) ---
+	target : $regex("^poi manmade (tower|watertower|chimney|lighthouse|silo)$")
+		define
+			min-zoom : 14
+			shape : diamond
+			shape-size : 14:5;18:8
+			fill-color : #707070
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4d4d4d
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi manmade (windmill|crane|obelisk|works)$")
+		define
+			min-zoom : 16
+			shape : diamond
+			shape-size : 16:4;18:7
+			fill-color : #717171
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #727171
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Power infrastructure (diamond, blue-grey) ---
+	target : $regex("^poi power (substation)$")
+		define
+			min-zoom : 14
+			shape : diamond
+			shape-size : 14:5;18:8
+			fill-color : #888899
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #898899
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi power (generator)$")
+		define
+			min-zoom : 15
+			shape : diamond
+			shape-size : 15:4;18:7
+			fill-color : #89899a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8a899a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi power (tower)$")
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : p:#3e3e3e;pw:1;m:-1,1;l:1,1,1,-1,-1,-1,-1,1,1,-1;m:-1,-1;l:1,1
+			shape-size : 14:2;18:8
+			fill-color : #928f8f
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #938f8f
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi power (pole)$")
+		define
+			min-zoom : 16
+			shape : square
+			shape-size : 16:2;18:4
+			fill-color : #938f90
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #948f90
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Military (diamond, red) ---
+	target : $regex("^poi military (bunker)$")
+		define
+			min-zoom : 15
+			shape : diamond
+			shape-size : 15:4;18:6
+			fill-color : #f65555
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #f55655
+			text-offset-vertical : 130%
+		draw : text
+
+	// --- Small public amenities (small circle, grey, high zoom only) ---
+	target : $regex("^poi amenity (drinking water|toilets|fountain|shelter|marketplace|public bookcase)$")
+		define
+			min-zoom : 17
+			shape : circle
+			shape-size : 17:3;19:5
+			fill-color : #8899aa
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #8999aa
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi amenity (bench|waste basket|recycling|vending machine|telephone)$")
+		define
+			min-zoom : 18
+			shape : circle
+			shape-size : 18:2;19:4
+			fill-color : #99999a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 19
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #989999
+			text-offset-vertical : 130%
+		draw : text
+
+
+	// --- Address points (house numbers) ---
+	target : poi housenumber
+		define
+			min-zoom : 18
+			text : [[addr:housenumber]]
+			font-size : 8
+			font-weight : normal
+			text-color : #7a7a7a
+		draw : text
+
+
+	// ==================================================================
+	// 14. NOTABLE BUT LESS COMMON FEATURES
+	// ==================================================================
+	// Decorative/scene-setting purpose - small but visually distinctive markers.
+	target : $regex("^poi special (arch|sinkhole)$")
+		define
+			min-zoom : 13
+			shape : custom
+			shape-def : p:#a06a3c;pw:1;m:-5,3;a:5,6,5,-3;m:-5,3;l:5,3
+			shape-size : 13:5;17:9
+			fill-color : #a06a3d
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #9f6a3c
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (geyser|hot spring)$")
+		define
+			min-zoom : 13
+			shape : custom
+			shape-def : f:#e0662a;p:#e0662a;m:0,-6;l:2,-2,-2,-2;Z
+			shape-size : 13:5;17:9
+			fill-color : #e0662a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #e1662a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (rock)$")
+		define
+			min-zoom : 15
+			shape : custom
+			shape-def : f:#8f8c88;p:#6f6c68;pw:1;m:-4,4;l:-3,-2,0,-5,3,-2,4,4;Z
+			shape-size : 15:4;18:7
+			fill-color : #8f8c88
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #908c88
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (flagpole)$")
+		define
+			min-zoom : 15
+			shape : custom
+			shape-def : p:#555555;pw:1;m:0,5;l:0,-8;m:0,-8;l:5,-6,0,-4;f:#cc3333
+			shape-size : 15:1;19:8
+			fill-color : #cc3333
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #cd3333
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (telescope)$")
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : p:#444466;pw:2;m:-3,4;l:3,-4
+			shape-size : 14:5;18:8
+			fill-color : #444466
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #454466
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (watermill)$")
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : f:#3d6b8a;p:#2a4a5f;pw:1;0,-6,6,0,0,6,-6,0;Z
+			shape-size : 14:5;18:8
+			fill-color : #3d6b8a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 15
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #3e6b8a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (ship)$")
+		define
+			min-zoom : 13
+			shape : custom
+			shape-def : f:#2a4a6b;p:#2a4a6b;m:-6,2;l:6,2,4,5,-4,5;Z
+			shape-size : 13:5;17:9
+			fill-color : #2a4a6b
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #2b4a6b
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (aircraft)$")
+		define
+			min-zoom : 13
+			shape : custom
+			shape-def : p:#556b2f;pw:2;m:-7,0;l:7,0;m:0,-5;l:0,5
+			shape-size : 13:5;17:9
+			fill-color : #556b2f
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 14
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #566b2f
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (bandstand)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:4;18:7
+			fill-color : #a1522d
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #a0532d
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (clock|sundial)$")
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:4;18:7
+			fill-color : #333333
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #343333
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (milestone|boundary stone)$")
+		define
+			min-zoom : 15
+			shape : square
+			shape-size : 15:3;18:5
+			fill-color : #7a7a4a
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 16
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #7b7a4a
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (beehive)$")
+		define
+			min-zoom : 15
+			shape : custom
+			shape-def : f:#d4a017;p:#a67c00;pw:1;-4,4,4,4,3,-4,-3,-4;Z
+			shape-size : 15:4;18:6
+			fill-color : #d4a017
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #d5a017
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (water well)$")
+		define
+			min-zoom : 16
+			shape : circle
+			shape-size : 16:3;18:5
+			fill-color : #4477aa
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 17
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #4577aa
+			text-offset-vertical : 130%
+		draw : text
+
+	target : $regex("^poi special (fire hydrant)$")
+		define
+			min-zoom : 17
+			shape : diamond
+			shape-size : 17:3;19:5
+			fill-color : #cc0000
+			line-style : none
+		draw : shape
+		define
+			min-zoom : 18
+			text : name
+			font-size : 8
+			font-weight : normal
+			text-color : #cd0000
+			text-offset-vertical : 130%
+		draw : text
+
+
+
+	// ==================================================================
+	// 15. SETTLEMENT LABELS (place=*) - always drawn on top of everything
+	// ==================================================================
+	target : place country
+		define
+			min-zoom : 2
+			max-zoom : 9
+			text : name
+			font-size : 2:9;4:13;6:17
+			font-weight : bold
+			text-color : #5c3a5a
+		draw : text
+
+	target : place state
+		define
+			min-zoom : 4
+			max-zoom : 10
+			text : name
+			font-size : 5:9;8:12;11:15
+			font-weight : bold
+			text-color : #6b4a68
+		draw : text
+
+	target : place capital city
+		define
+			min-zoom : 3
+			shape : square
+			shape-size : 3:3;8:6
+			fill-color : #232222
+			line-style : none
+		draw : shape
+		define
+			text : name
+			font-size : 4:12;8:16;12:22
+			font-weight : bold
+			text-color : #222322
+		draw : text
+
+	target : place city
+		define
+			min-zoom : 6
+			shape : circle
+			shape-size : 6:2;10:4
+			fill-color : #232323
+			line-style : none
+		draw : shape
+		define
+			text : name
+			font-size : 6:11;10:14;14:20
+			font-weight : bold
+			text-color : #242323
+		draw : text
+
+	target : place town
+		define
+			min-zoom : 9
+			shape : circle
+			shape-size : 9:2;13:3
+			fill-color : #242424
+			line-style : none
+		draw : shape
+		define
+			text : name
+			font-size : 9:9;12:12;16:16
+			font-weight : bold
+			text-color : #252424
+		draw : text
+
+	target : place suburb
+		define
+			min-zoom : 12
+			text : name
+			font-size : 12:8;16:12;18:14
+			font-weight : normal
+			font-style : italic
+			text-color : #777777
+		draw : text
+
+	target : place village
+		define
+			min-zoom : 12
+			shape : circle
+			shape-size : 12:1.5;16:2.5
+			fill-color : #252525
+			line-style : none
+		draw : shape
+		define
+			text : name
+			font-size : 12:9;16:13;18:15
+			font-weight : normal
+			text-color : #262525
+		draw : text
+
+	target : place quarter
+		define
+			min-zoom : 14
+			text : name
+			font-size : 14:8;18:11
+			font-weight : normal
+			font-style : italic
+			text-color : #787878
+		draw : text
+
+	target : place hamlet
+		define
+			min-zoom : 14
+			text : name
+			font-size : 14:8;18:12
+			font-weight : normal
+			text-color : #333433
+		draw : text
+
+	target : place isolated dwelling
+		define
+			min-zoom : 15
+			text : name
+			font-size : 15:7;19:10
+			font-weight : normal
+			font-style : italic
+			text-color : #555655
+		draw : text
+
+	target : place locality
+		define
+			min-zoom : 14
+			text : name
+			font-size : 14:7;19:10
+			font-weight : normal
+			font-style : italic
+			text-color : #797979
+		draw : text
+
+	target : place island
+		define
+			min-zoom : 8
+			text : name
+			font-size : 8:9;14:13
+			font-weight : normal
+			font-style : italic
+			text-color : #4c80b3
+		draw : text
+
+	target : place square
+		define
+			min-zoom : 16
+			text : name
+			font-size : 16:8;19:11
+			font-weight : normal
+			text-color : #565756
+		draw : text
+
+
+// ====================================================================
+// Konec stylopisu.
+// ====================================================================

@@ -1,0 +1,586 @@
+// UK Leisure Map
+
+// OpenStreetMap Maperitive ruleset for walking, cycling, etc.
+// showing relevant features and UK public rights of way
+
+// Created by gregrs-uk. Released under the Creative Commons
+// Attribution-NonCommercial-ShareAlike 3.0 Unported License
+// (http://creativecommons.org/licenses/by-nc-sa/3.0/deed.en_GB)
+
+features
+
+	// things go here that can be points, lines or areas
+	parking public : node[amenity=parking AND access=yes] area[amenity=parking AND access=yes]
+	parking nonpublic : node[amenity=parking AND NOT access=yes] area[amenity=parking AND NOT access=yes]
+	church : node[amenity=place_of_worship AND (religion=christian OR religion=Christian)] area[amenity=place_of_worship AND (religion=christian OR religion=Christian)]
+	school : node[amenity=school] area[amenity=school]
+	caravan site : node[tourism=caravan_site] area[tourism=caravan_site]
+	// TODO campsite
+	// TODO tourist info
+	// TODO pub
+	// TODO railway station : node[railway=station] area[railway=station]
+
+	points
+		peak : natural=peak
+		tree : natural=tree
+		barrier stile : barrier=stile
+		barrier kiss : barrier=kissing_gate
+		barrier gate : barrier=gate
+		barrier cattle_grid : barrier=cattle_grid
+		barrier entrance : barrier=entrance
+		telephone : amenity=telephone
+
+		// TODO mast
+		// TODO wind turbine
+
+	lines
+		// OSGB grid for use with OSM files available at
+		// http://www.rogercalvert.me.uk/OSM/GBGrid/
+		grid : national_grid
+
+		motorway road : highway=motorway OR highway=motorway_link
+		trunk road : highway=trunk OR highway=trunk_link
+		a road : highway=primary OR highway=primary_link
+		b road : highway=secondary OR highway=secondary_link
+		minor road : highway=tertiary OR highway=tertiary_link OR highway=unclassified OR highway=residential
+		tiny road : highway=service
+
+		track solid : highway=track AND (tracktype=grade1 OR tracktype=grade2)
+		track soft : highway=track AND (tracktype=grade3 OR tracktype=grade4 OR tracktype=grade5 OR NOT tracktype)
+
+		railway : railway=rail OR railway=preserved
+
+		river : waterway=river
+		stream : waterway=stream
+
+		// field boundaries
+		hedge barrier : barrier=hedge
+		fence barrier : barrier=fence
+		tree row barrier : natural=tree_row
+
+		// path bridge
+		path bridge : (highway=footway OR highway=bridleway OR highway=cycleway OR highway=path) AND bridge=yes
+
+		// designated public rights of way
+		designated public footpath : highway AND designation=public_footpath
+		designated public bridleway : highway AND designation=public_bridleway
+		designated restricted byway : highway AND designation=restricted_byway
+		designated boat : highway AND designation=byway_open_to_all_traffic
+
+		// not public right of way but foot access specified
+		specified footpath : highway AND (foot=yes OR foot=designated) AND NOT designation
+
+		// foot access permissive
+		permissive footpath : highway AND foot=permissive AND NOT designation
+
+		// any other path
+		other path : (highway=footway OR highway=bridleway OR highway=cycleway OR highway=path) AND NOT (designation OR foot=permissive OR foot=designated OR foot=yes)
+
+		// walking routes
+		route foot : relation[type=route AND route=foot]
+
+		contour major : contour[@isMulti(elevation, 50)]
+		contour minor : contour[@isMulti(elevation, 10) and not @isMulti(elevation, 50)]
+
+	areas
+		// text labels
+		labels features: landuse=forest OR natural=wood OR natural=water OR landuse=reservoir OR landuse=basin
+		labels other : building AND NOT (tourism=caravan_site OR amenity=school OR (amenity=place_of_worship AND religion=christian))
+
+		// buildings
+		building normal : (building AND NOT (building=school OR (building AND amenity=place_of_worship AND religion=christian) OR building=civic OR building=hospital OR (building AND amenity=hospital))) AND NOT (ruins=yes OR historic=ruins)
+		building important : (building=school OR (building AND amenity=place_of_worship AND religion=christian) OR building=civic OR building=hospital OR (building AND amenity=hospital)) AND NOT (ruins=yes OR historic=ruins)
+		building ruin : (building AND ruins=yes) OR historic=ruins
+
+		// land use / natural feature areas
+		built up : landuse=residential OR landuse=commercial OR landuse=retail OR landuse=industrial OR landuse=farmyard		
+		farmyard : landuse=farmyard
+		pitch : amenity=pitch
+		forest : landuse=forest OR natural=wood
+		water : natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin
+		// TODO military : landuse=military OR military=danger_area
+
+properties
+	// applies to everything unless overridden
+
+	// chops off some streets when set to true!
+	curved : false
+	text-halo-width : 15%
+	text-halo-opacity : 0.8
+	font-size : 15:9;16:12
+	text-color : black
+	font-family : Arial
+	// uncomment the following line for a transparent map background
+	// map-background-opacity : 0
+		
+rules
+
+	// N.B. earlier rules are printed over the top of later rules
+
+	// ----- GRID -----
+
+	target : grid
+		define
+			line-color : DodgerBlue
+			line-opacity : 0.5
+			line-width : 1
+		draw : line
+
+	// ----- LABELS -----
+
+	// PATH BRIDGES
+	target : path bridge
+		define
+			min-zoom : 15
+			text : "B"
+			text-orientation : fixed
+		draw : text
+
+	// FEATURE LABELS
+	target : labels features
+		define
+			min-zoom : 15
+			text : name
+			text-orientation : fixed
+		draw : text
+
+	// OTHER LABELS
+	target : labels other
+		define
+			min-zoom : 18
+			text : @any(name, [[addr:housenumber]])
+			text-orientation : fixed
+		draw : text
+
+	// TELEPHONE
+	target : telephone
+		define
+			min-zoom : 14
+			text : "T"
+			text-orientation : fixed
+		draw : text
+
+	// PARKING
+	target : parking*
+		define
+			min-zoom : 14
+			text : "P"
+			text-orientation : fixed
+		if : parking public
+			define
+				text-color : blue
+		else
+			define
+				text-color : black
+		draw : text
+
+	// FARMYARDS
+	target : farmyard
+		define
+			min-zoom : 15
+			text : name
+			text-orientation : fixed
+			text-align-vertical : far
+			text-offset-vertical : -100%
+		draw : text
+
+	// ----- POINTS -----
+
+	// PEAK
+	target : peak
+		define
+			fill-color : brown
+			line-style : none
+			min-zoom : 13
+			shape : triangle
+			shape-size : 12:2;16:20
+		draw : shape
+		define
+			min-zoom : 14.5
+			text : @if(name, name @if(ele, "\n(" ele ")"), ele)
+			text-align-vertical : near
+			text-color : black
+			text-max-width : 15
+			text-offset-vertical : 50%
+		draw : text
+
+	// TREE
+	target : tree
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:2;16:3;17:6
+			fill-color : #8FCD8F
+			line-style : none
+		draw : shape
+
+	// BARRIER NODES
+	target : barrier *
+		define
+			min-zoom : 15
+			shape : circle
+			shape-size : 15:2;16:3;17:4
+			line-style : none
+		if : barrier stile
+			define
+				fill-color : red
+		elseif : barrier kiss
+			define
+				fill-color : #804080
+		elseif : barrier gate
+			define
+				fill-color : #4D4DFF
+		elseif : barrier cattle_grid
+			define
+				fill-color : black
+		elseif : barrier entrance
+			define
+				fill-color : #C0C0C0
+		else
+			stop
+		draw : shape
+
+	// CHURCH - show label, or at high zoom if there is a name show it instead
+	target : church
+		define
+			min-zoom : 14
+			max-zoom : 18
+			text : "Ch"
+			// ✝ < could use that symbol but doesn't render properly
+			text-orientation : fixed
+		draw : text
+	target : church
+		define
+			min-zoom : 18
+			text : @if(name, name, "Ch")
+			text-orientation : fixed
+		draw : text
+
+	// SCHOOL - show label, or at high zoom if there is a name show it instead
+	target : school
+		define
+			min-zoom : 14
+			max-zoom : 18
+			text : "Sch"
+			text-orientation : fixed
+		draw : text
+	target : school
+		define
+			min-zoom : 18
+			text : @if(name, name, "Sch")
+			text-orientation : fixed
+		draw : text
+
+	// CARAVAN SITE - show label, or at high zoom if there is a name show it instead
+	target : caravan site
+		define
+			min-zoom : 14
+			max-zoom : 18
+			text : "CP"
+			text-orientation : fixed
+		draw : text
+	target : caravan site
+		define
+			min-zoom : 18
+			text : @if(name, name, "CP")
+			text-orientation : fixed
+		draw : text
+
+
+	// ----- LINES -----
+
+	// rights of way drawn over other highways etc.
+
+	// PUBLIC RIGHTS OF WAY
+	target : designated*
+		define
+			min-zoom : 14
+			line-width : 13:0.5;16:2.5
+			line-style : dash
+		if : designated public footpath
+			define
+				line-color : #ff8000
+		elseif : designated public bridleway
+			define
+				line-color : #0080FF
+		elseif : designated restricted byway
+			define
+				line-color : purple
+		elseif : designated boat
+			define
+				line-color : red
+		else
+			stop
+		draw : line
+
+	target : specified footpath
+		define
+			min-zoom : 14
+			line-width : 13:0.5;16:2.5
+			line-color : green
+			line-style : dot
+		draw : line
+
+	target : permissive footpath
+		define
+			min-zoom : 14
+			line-width : 13:0.5;16:2.5
+			line-color : magenta
+			line-style : dot
+		draw : line
+
+	target : other path
+		define
+			min-zoom : 14
+			line-width : 13:0.5;16:2.5
+			line-color : black
+			line-style : dot
+		draw : line
+
+	// ROUTE FOOT (walking route relations)
+	
+	target : route foot
+		define
+			min-zoom : 14
+			line-width : 13:2;16:10
+			line-color : magenta
+			line-style : solid
+			line-opacity : 0.15
+		draw : line
+
+	// FIELD BOUNDARIES
+
+	target : *barrier
+		define
+			min-zoom : 15
+			line-style : solid
+			line-width : 15:0.3;17:1.5
+			line-opacity : 0.7
+		if : fence barrier
+			define
+				line-color : black
+			draw : line
+		elseif : hedge barrier
+			define
+				line-color : #00a000
+			draw : line
+		elseif : tree row barrier
+			define
+				line-color : #C4E6C4
+				line-width : 15:1.5;17:6
+				line-opacity : 1
+			draw : line
+		else
+			stop
+		draw : line
+
+
+	// ROADS
+	target : *road
+		define
+			border-style : solid
+			border-color : black
+			border-width : 30%
+			border-opacity : 1
+
+		if : motorway road
+			define
+				line-color : DodgerBlue
+				line-width : 13:3;16:4.5;18:7
+			draw : line
+			define
+				text : ref
+			draw : text
+				
+		elseif : trunk road
+			define
+				line-color : ForestGreen
+				line-width : 13:3;16:4.5;18:7
+			draw : line
+			define
+				text : ref
+			draw : text
+
+		elseif : a road
+			define
+				line-color : ForestGreen
+				line-width : 13:3;16:4.5;18:7
+			draw : line
+			define
+				text : ref
+			draw : text
+
+		elseif : b road
+			define
+				line-color : yellow
+				line-width : 13:2.5;16:4;18:6
+			draw : line
+			define
+				text : ref
+			draw : text
+
+		elseif : minor road
+			define
+				min-zoom : 10
+				line-color : white
+				line-width : 13:2;16:3.5;18:5
+			draw : line
+			define
+				min-zoom : 17
+				text : name
+			draw : text
+
+		elseif : tiny road
+			define
+				min-zoom : 13
+				line-color : white
+				line-width : 13:2;16:3.5;18:5
+				border-opacity : 0.4
+			draw : line
+			define
+				min-zoom : 17
+				text : name
+			draw : text
+
+		else
+			stop
+
+	// TRACK
+	target : track*
+		define
+			min-zoom : 13
+			line-color : white
+			line-opacity : 1
+			line-width : 13:2;16:3.5;18:5
+			border-color : gray
+			border-width : 30%
+			border-opacity : 1
+		if : track solid
+			define
+				border-style : dash
+		elseif : track soft
+			define
+				border-style : dot
+		else
+			stop
+		draw : line
+
+	// RAILWAY
+	target : railway
+		define
+			line-color : black
+			line-width: 13:0.5;14:1;15:1.5;16:2
+		draw : line
+
+	// RIVER
+	target : river
+		define
+			min-zoom : 14
+			line-color : #80B2E6
+			line-width: 14:1;15:2;16:3
+		draw : line
+
+	// STREAM
+	target : stream
+		define
+			min-zoom : 14
+			line-color : #80B2E6
+			line-width: 14:0.5;15:1;16:1.5
+		draw : line
+
+	// CONTOURS
+	target: contour*
+		define
+			line-color : green
+
+			line-opacity : 0.6
+			curved : true
+		if : *major
+			define
+				min-zoom : 13
+				line-width : 13:0.2;16:0.4
+				line-style : dash
+		else
+			define
+				min-zoom : 13
+				line-width : 13:0.2;16:0.4
+				line-style : dot
+		draw : contour
+		define
+			text : ele
+		draw : text
+
+	// ----- AREAS -----
+
+	// BUILDING
+	target : building*
+		define
+			min-zoom : 14
+			line-style : none
+			line-width: 0.5
+		if : building normal
+			define
+				fill-color : #C08E60
+		elseif : building important
+			define
+				fill-color : #5A3616
+		elseif : building ruin
+			define
+				fill-color : #C08E60
+				fill-opacity : 0
+				line-style : dot
+				line-color : black
+		else
+			stop
+		draw : fill
+
+	// SCHOOL
+	target : school
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color : yellow
+			fill-opacity : 0.4
+		draw : fill
+
+	// CARAVAN SITE
+	target : caravan site
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color : magenta
+			fill-opacity : 0.3
+		draw : fill
+
+	// WATER e.g. lake
+	target : water
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color: #80B2E6
+		draw : fill
+
+	// BUILT UP
+	target : built up
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color: #E1E1E1
+		draw : fill
+
+	// PITCH
+	target : pitch
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color: #94BF94
+		draw : fill
+
+	// FOREST
+	target : forest
+		define
+			min-zoom : 12
+			line-style : none
+			fill-color: #C4E6C4
+		draw : fill
+

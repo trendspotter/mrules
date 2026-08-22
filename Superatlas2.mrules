@@ -1,0 +1,706 @@
+// Rendering rules for Superatlas OSM overlay
+// v4 incl. OSM ways and trail difficulties
+// http://maperitive.net
+
+// Based on the default rules created by Igor Brejc, modified by Hauke
+// Released under the Creative Commons Attribution-ShareAlike 3.0 License (http://creativecommons.org/licenses/by-sa/3.0/)
+// Updates by Michael <quelbs_at_gmail.com>
+// Icons used: Map icons CC-0 from SJJB Management (http://www.sjjb.co.uk/mapicons)
+
+
+features
+	points, areas, lines
+		sitzbank : amenity=bench
+		wasserfall : waterway=waterfall
+		kletterstelle : sport=climbing
+		furt : ford=yes
+
+	points, areas
+		mine : man_made=adit OR man_made=mineshaft OR historic=mine
+		leuchtfeuer : man_made=beacon
+		kreuz : man_made=cross
+		leuchtturm : man_made=lighthouse
+		funkturm : man_made=communications_tower OR (man_made=tower AND tower:type=communication)
+		aussichtsturm : man_made=tower AND (tower:type=observation OR tourism=viewpoint)
+		turm : man_made=tower AND NOT (tower:type=observation OR man_made=communications_tower OR tower:type=communication)
+		wassermuehle : man_made=watermill
+		brunnen : man_made=water_well
+		wasserhahn : man_made=water_tap
+		windmuehle : man_made=windmill
+		vogelbeobachtung : leisure=bird_hide AND NOT man_made=tower
+		wildbeobachtung : leisure=wildlife_hide AND NOT man_made=tower
+		feuerstelle : leisure=firepit OR amenity=bbq OR amenity=firepit
+		trinkwasser : amenity=drinking_water
+		wasserpunkt : amenity=water_point
+		springbrunnen : amenity=fountain
+		rangerstation : amenity=ranger_station
+		schutzhuette : amenity=shelter OR accommodation=shelter
+		berghuette : tourism=alpine_hut
+		wanderhuette : tourism=wilderness_hut
+		sehenswuerdigkeit : tourism=attraction
+		kunst : tourism=artwork
+		wegweiser : information=guidepost
+		wanderkarte : information=map
+		infotafel : information=board OR tourism=information
+		touristeninformation : information=office
+		rastplatz : tourism=picnic_site OR amenity=table OR leisure=picnic_table
+		archaeologisch : historic=archaeological_site
+		schlachtfeld : historic=battlefield
+		grenzstein : historic=boundary_stone
+		stadttor : historic=city_gate
+		fort : historic=fort
+		meilenstein : historic=milestone
+		denkmal : (historic=memorial AND NOT (memorial:type=stolperstein OR man_made=cross))
+		stolperstein : historic=memorial AND memorial:type=stolperstein
+		monument : historic=monument OR man_made=obelisk 
+		ruine : historic=ruins
+		runenstein : historic=rune_stone
+		grab : historic=tomb
+		wegkreuz : historic=wayside_cross
+		schrein : historic=wayside_shrine OR building=wayside_shrine OR historic=tree_shrine
+		quelle : natural=spring
+		fels : natural=rock
+		stein : natural=stone
+		historischerstein : historic=stone
+		hoehle : natural=cave_entrance
+		laubbaum : natural=tree AND leaf_type=broadleaved AND (denotation=natural_monument OR tourism=attraction OR @isMatch(name, ".*")) AND NOT @isMatch(end_date, ".*")
+		nadelbaum : natural=tree AND leaf_type=needleleaved AND (denotation=natural_monument OR tourism=attraction OR @isMatch(name, ".*")) AND NOT @isMatch(end_date, ".*")
+		baum : natural=tree AND NOT (leaf_type=broadleaved OR leaf_type=needleleaved) AND (denotation=natural_monument OR tourism=attraction OR @isMatch(name, ".*")) AND NOT @isMatch(end_date, ".*")
+		kloster : historic=monastery AND (NOT ruins=yes)
+		kirche : (building=church OR building=cathedral) AND (NOT ruins=yes)
+		klosterruine : historic=monastery  AND ruins=yes
+		kirchenruine : (building=church OR building=cathedral) AND ruins=yes
+		kapelle : (building=chapel OR building=wayside_chapel) AND (NOT (historic=tomb OR ruins=yes))
+		kapellenruine : (building=chapel OR building=wayside_chapel) AND ruins=yes AND NOT historic=tomb
+		moschee : building=mosque AND (NOT ruins=yes)
+		synagogue : building=synagogue AND (NOT ruins=yes)
+		moscheeruine : building=mosque AND ruins=yes
+		synagoguenruine : building=synagogue AND ruins=yes
+		tempel : building=temple
+		christlich : amenity=place_of_worship AND religion=christian AND (NOT (historic=wayside_shrine OR @isOneOf(building, church, cathedral, chapel, wayside_chapel, wayside_shrine)))
+		muslimisch : amenity=place_of_worship AND religion=muslim AND NOT building=mosque
+		juedisch : amenity=place_of_worship AND religion=jewish AND NOT building=synagogue
+		heiligtum : amenity=place_of_worship AND NOT (religion=muslim OR religion=jewish OR religion=christian)
+		parking : amenity=parking
+		aussicht  : (tourism=viewpoint AND NOT man_made=tower) OR viewpoint=yes
+		schloss : historic=castle AND @isOneOf(castle_type, palace, stately, manor) AND (NOT ruins=yes)
+		burg : historic=castle AND NOT @isOneOf(castle_type, palace, stately, manor) AND (NOT ruins=yes)
+		schlossruine : historic=castle AND @isOneOf(castle_type, palace, stately, manor) AND ruins=yes
+		burgruine : historic=castle AND ruins=yes AND NOT @isOneOf(castle_type, palace, stately, manor) 
+		wc : amenity=toilets
+		galgen : historic=gallows OR historic=pillory
+		badestelle : (leisure=swimming_area OR leisure=swimming_pool OR leisure=water_park) AND NOT access=private
+		sternwarte : man_made=observatory
+		teleskop : man_made=telescope
+		TrigonometrischerPunkt : man_made=survey_point
+		geysir : natural=geyser
+		
+	areas
+		laubwald : ((landuse=forest OR natural=wood) AND (leaf_type=broadleaved OR leaf_cycle=deciduous)) OR (wood=deciduous)
+		nadelwald : ((landuse=forest OR natural=wood) AND (leaf_type=needleleaved OR leaf_cycle=evergreen)) OR (wood=coniferous)
+		mischwald : ((landuse=forest OR natural=wood) AND (leaf_type=mixed OR leaf_cycle=mixed)) OR (wood=mixed)
+		wald : ((landuse=forest OR natural=wood) AND NOT (@isOneOf(leaf_type, broadleaved, needleleaved, mixed) OR @isOneOf(leaf_cycle, deciduous, evergreen, mixed))) AND NOT @isOneOf(wood, deciduous, coniferous, mixed)
+		national park : boundary=national_park
+		nature reserve : leisure=nature_reserve
+		quarry : landuse=quarry OR landuse=surface_mining
+		felsgebiet : natural=bare_rock
+		geroell : natural=scree
+		wein : landuse=vineyard
+		moor : natural=moor OR natural=wetland OR natural=mud
+		heide : natural=heath
+		busch : natural=scrub
+		friedhof : amenity=grave_yard OR landuse=cemetery
+		gletscher : natural=glacier
+
+	lines
+		highway : (@isMatch(highway, ".*") OR @isMatch(abandoned:highway, ".*")) AND NOT @isOneOf(highway, motorway, trunk, motorway_link, trunk_link) 
+		treppe : highway=steps
+		bohlenweg : bridge=boardwalk OR (@isMatch(highway, ".*") AND surface=wood AND NOT highway=steps)
+		contour major : contour[@isMulti(elevation, 50)]
+		contour minor : contour[@isMulti(elevation, 10) and not @isMulti(elevation, 50)]
+		grat : natural=arete OR natural=ridge
+		felshang : natural=cliff 
+		aufschluss : geological=outcrop
+		hang : man_made=embankment OR earth_bank=scarp OR earth_bank=cut_bank OR (natural=earth_bank AND NOT earth_bank=gully)
+		wall : man_made=dyke OR embankment=yes
+		gully : natural=gully OR barrier=ditch OR earth_bank=gully
+		aquaedukt : historic=aqueduct
+		kletterhilfen : highway=via_ferrata OR assisted_trail=yes OR @isMatch(via_ferrata, ".*") OR @isMatch(safety_rope, ".*") OR @isMatch(ladder, ".*") OR @isMatch(rungs, ".*")
+
+	points
+		restaurant : amenity=restaurant 
+		amenity pub : amenity=pub OR amenity=biergarten
+		cafe : amenity=cafe
+		peak : natural=peak
+
+properties
+	map-background-color	: #FFFFFF
+	map-background-opacity	: 0
+	map-sea-color : #0000FF
+	font-weight : bold
+	font-family : GaramondNo8
+	font-style : italic
+	text-max-width : 10
+	text-halo-width : 30%
+	text-halo-opacity : 0.9
+	text-halo-color : #FFFFFF
+	text-align-horizontal : center
+	text-align-vertical : center
+	text-line-spacing : 0.7
+	font-stretch : 1.0
+	map.rendering.lflp.min-buffer-space : 2
+	map.rendering.lflp.max-allowed-corner-angle : 40
+	map.coastline.mode : ignore
+	
+rules
+
+	target : highway*
+		define
+			font-size : 14:9;18:16
+			font-weight : bold
+			font-style : normal
+			font-family : Arial Narrow
+			text-offset-vertical : -50%
+			min-zoom : 14
+			border-style : solid
+			border-color : #FFFFFF
+			border-width : 30%
+			border-opacity : 0.8
+			text : @if(via_ferrata_scale, "V" via_ferrata_scale)
+			text-color : #8b008b
+			text-halo-width : 40%
+			text-halo-color : #FFFFFF
+			text-halo-opacity : 0.9
+
+		draw : text
+
+		define
+			line-color : #e06cff
+			line-width : 14:1.5;15:2.5
+			line-style : dashdotdot
+
+		for : highway=path
+			define
+				line-style : dot
+				line-color : #c71585
+				line-width : 14:1.5;15:2
+				
+		for : abandoned:highway OR trail_visibility=horrible OR trail_visibility=no
+			define
+				line-color : #ff5500
+		
+		for : ford
+			define
+				line-color : #0000ff
+		
+		draw : line
+		
+		for : access=private OR access=no
+			define
+				min-zoom : 14
+				shape : custom
+				shape-def : m:20,20;l:-20,-20;m:-20,20;l:20,-20
+				shape-size : 14:5;18:7
+				shape-aspect : 1
+				shape-spacing : 14:2;18:2.5
+				line-style : solid
+			for : access=no
+				define
+					line-color : #EA9500
+			for : access=private
+				define
+					line-color : #FF0000
+			draw : shape
+
+		for : sac_scale=hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/") "T1"
+				text-color : #8B6508
+		for : sac_scale=mountain_hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/")"T2"
+				text-color : #CC0000
+		for : sac_scale=demanding_mountain_hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/")"T3"
+				text-color : #CC0000
+		for : sac_scale=alpine_hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/")"T4"
+				text-color : #0000CC
+		for : sac_scale=demanding_alpine_hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/")"T5"
+				text-color : #0000CC
+		for : sac_scale=difficult_alpine_hiking
+			define
+				text : @if(via_ferrata_scale, "V" via_ferrata_scale "/")"T6"
+				text-color : #0000CC
+				
+		define
+			text-halo-width : 40%
+			text-halo-color : #FFFFFF
+			text-halo-opacity : 0.9
+
+		draw : text
+
+		for : oneway=yes OR oneway=true
+			define
+				min-zoom : 16
+				shape : custom
+				shape-def : 60,0,20,-40,20,-15,-30,-15,-30,15,20,15,20,40;Z
+				shape-size : 14:10;18:14
+				shape-aspect : 1
+				shape-spacing : 4
+				fill-color : #FFFFFF
+				line-style : none
+			for : oneway=-1
+				define
+					angle : 180
+			draw : shape
+
+	target : kletterhilfen
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : -4,1, 0,0, -4,-1;Z
+			shape-spacing : 0
+			shape-size : 16:6;20:20
+			shape-aspect : 3
+			fill-color : #CCCC00
+			line-style : none
+		draw : shape
+
+	target : treppe
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : -1,1, -1,-1, 1,-1, 1,1;Z
+			shape-spacing : 2
+			shape-size : 16:1.5;20:3.5
+			shape-aspect : 3
+			fill-color : #CC0000
+			line-style : none
+		draw : shape
+
+	target : metallweg
+		define    
+			min-zoom : 14
+			line-color : #000000
+			line-width : 14:2.5;17:4.5
+			line-style : solid
+			border-style : solid
+			border-color : #FFFFFF
+			border-width : 2
+		draw : line
+
+	target : bohlenweg
+		define
+			min-zoom : 14
+			shape : custom
+			shape-def : -1,3, -1,-3, 1,-3, 1,3;Z
+			shape-spacing : 0.1
+			shape-size : 16:2.5;20:7
+			shape-aspect : 3
+			fill-color : #705200
+			line-style : none
+		draw : shape
+
+	target : sitzbank
+		define
+			icon-image : icons/SJJB/png/sitzbank.png
+			min-zoom : 14
+			icon-width : 14:14;17:22
+			shape-mode : center
+			shape-orientation: fixed
+		draw : icon
+
+	target : rastplatz
+		define
+			icon-image : icons/SJJB/png/tourist_picnic.p.32.png
+			min-zoom : 14
+			icon-width : 14:14;17:22
+		draw : icon
+
+	target : burg, burgruine, schloss, schlossruine, fort, archaeologisch, ruine, aussichtsturm, denkmal, monument, turm, hoehle, mine, fels, stein, historischerstein, schutzhuette, berghuette, wanderhuette, wasserfall, geysir
+		define
+			min-zoom : 14
+			text-color : #000000
+			text-offset-vertical : 150%
+			font-size : 12
+			font-weight : bold
+			text-halo-width : 40%
+			text-halo-color : #FFFFFF
+			text-halo-opacity : 0.9
+		draw : text
+
+	target : burg
+		define
+			icon-image : icons/SJJB/png/Burg.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : burgruine
+		define
+			icon-image : icons/SJJB/png/BurgRuine.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : schloss
+		define
+			icon-image : icons/SJJB/png/Schloss.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : schlossruine
+		define
+			icon-image : icons/SJJB/png/SchlossRuine.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : fort
+		define
+			icon-image : icons/SJJB/png/Fort.png
+			min-zoom : 14
+			icon-width : 14:14;17:28
+		draw : icon
+
+	target : stadttor
+		define
+			icon-image : icons/SJJB/png/Stadttor.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : archaeologisch
+		define
+			icon-image : icons/SJJB/png/dolmen.png
+			min-zoom : 14
+			icon-width : 14:14;17:24
+		draw : icon
+
+	target : ruine
+		define
+			icon-image : icons/SJJB/png/tourist_ruin.p.32.png
+			min-zoom : 14
+			icon-width : 14:14;17:28
+		draw : icon
+
+	target : aussichtsturm
+		define
+			icon-image : icons/SJJB/png/Aussichtsturm.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : wegweiser
+		define
+			icon-image : icons/SJJB/png/Wegweiser.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : denkmal
+		define
+			icon-image : icons/SJJB/png/Denkmal.png
+			min-zoom : 14
+			icon-width : 14:12;17:24
+		draw : icon
+
+	target : stolperstein
+		define
+			icon-image : icons/SJJB/png/Stolperstein.png
+			min-zoom : 14
+			icon-width : 14:10;17:16
+		draw : icon
+
+	target : monument
+		define
+			icon-image : icons/SJJB/png/Obelisk.png
+			min-zoom : 14
+			icon-width : 14:11;17:24
+		draw : icon
+
+	target : grenzstein
+		define
+			icon-image : icons/SJJB/png/Grenzstein.png
+			min-zoom : 14
+			icon-width : 14:12;17:28
+		draw : icon
+
+	target : meilenstein
+		define
+			icon-image : icons/SJJB/png/Meilenstein.png
+			min-zoom : 14
+			icon-width : 14:12;17:28
+		draw : icon
+
+	target : runenstein
+		define
+			icon-image : icons/SJJB/png/Runenstein.png
+			min-zoom : 14
+			icon-width : 14:12;17:28
+		draw : icon
+
+	target : turm
+		define
+			icon-image : icons/SJJB/png/Turm.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : funkturm
+		define
+			icon-image : icons/SJJB/png/Funkturm.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : leuchtturm
+		define
+			icon-image : icons/SJJB/png/Leuchtturm.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : leuchtfeuer
+		define
+			icon-image : icons/SJJB/png/Leuchtfeuer.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : hoehle
+		define
+			icon-image : icons/SJJB/png/Hoehle.png
+			min-zoom : 14
+			icon-width : 14:10;17:18
+		draw : icon
+
+	target : mine
+		define
+			icon-image : icons/SJJB/png/Mine.png
+			min-zoom : 14
+			icon-width : 14:10;17:18
+		draw : icon
+
+	target : fels
+		define
+			icon-image : icons/SJJB/png/Fels.png
+			min-zoom : 14
+			icon-width : 14:12;17:24
+		draw : icon
+
+	target : stein
+		define
+			icon-image : icons/SJJB/png/Stein.png
+			min-zoom : 14
+			icon-width : 14:12;17:24
+		draw : icon
+
+	target : historischerstein
+		define
+			icon-image : icons/SJJB/png/SteinHistorisch.png
+			min-zoom : 14
+			icon-width : 14:12;17:28
+		draw : icon
+
+	target : nadelbaum, laubbaum, baum
+		define
+			min-zoom : 14
+			text-color : #008800
+			text-offset-vertical : 150%
+			font-size : 12
+			font-weight : bold
+			text-halo-width : 40%
+			text-halo-color : #FFFFFF
+			text-halo-opacity : 0.9
+		draw : text
+
+	target : nadelbaum
+		define
+			icon-image : icons/SJJB/png/Nadelbaum.png
+			min-zoom : 14
+			icon-width : 14:7;17:14
+		draw : icon
+
+	target : laubbaum
+		define
+			icon-image : icons/SJJB/png/Laubbaum.png
+			min-zoom : 14
+			icon-width : 14:8;17:20
+		draw : icon
+
+	target : baum
+		define
+			icon-image : icons/SJJB/png/Baum.png
+			min-zoom : 14
+			icon-width : 14:10;17:20
+		draw : icon
+
+	target : schutzhuette
+		define
+			icon-image : icons/SJJB/png/HuetteLeer.png
+			min-zoom : 14
+			icon-width : 14:10;17:18
+		draw : icon
+
+	target : berghuette
+		define
+			icon-image : icons/SJJB/png/Berghuette.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : wanderhuette
+		define
+			icon-image : icons/SJJB/png/Wanderhuette.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : vogelbeobachtung, wildbeobachtung
+		define
+			icon-image : icons/SJJB/png/Beobachtungsstand.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : wasserfall
+		define
+			icon-image : icons/SJJB/png/Wasserfall.png
+			min-zoom : 14
+			icon-width : 14:12;17:16
+			shape-mode : center
+			shape-orientation: fixed
+		draw : icon
+
+	target : geysir
+		define
+			icon-image : icons/SJJB/png/Geysir.png
+			min-zoom : 14
+			icon-width : 14:12;17:24
+		draw : icon
+
+	target : aussicht
+		define
+			icon-image : icons/SJJB/png/AussichtRot.png
+			min-zoom : 14
+			icon-width : 14:14;17:24
+		draw : icon
+
+	target : wanderkarte
+		define
+			icon-image : icons/SJJB/png/InfoIrot.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : infotafel
+		define
+			icon-image : icons/SJJB/png/amenity_information.p.32.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : touristeninformation
+		define
+			icon-image : icons/SJJB/png/TouristI.png
+			min-zoom : 14
+			icon-width : 14:16;17:30
+		draw : icon
+
+	target : kirche
+		define
+			icon-image : icons/SJJB/png/Kirche.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : kloster
+		define
+			icon-image : icons/SJJB/png/Kloster.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : kirchenruine
+		define
+			icon-image : icons/SJJB/png/KirchenRuine.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : klosterruine
+		define
+			icon-image : icons/SJJB/png/KlosterRuine.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : kapelle
+		define
+			icon-image : icons/SJJB/png/Capelle.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : kapellenruine
+		define
+			icon-image : icons/SJJB/png/KapellenRuine.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : schrein
+		define
+			icon-image : icons/SJJB/png/Schrein.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : christlich
+		define
+			icon-image : icons/SJJB/png/ChristlicherOrt.png
+			min-zoom : 14
+			icon-width : 14:12;17:22
+		draw : icon
+
+	target : kreuz
+		define
+			icon-image : icons/SJJB/png/Kreuz.png
+			min-zoom : 14
+			icon-width : 14:10;17:18
+		draw : icon
+
+	target : wegkreuz
+		define
+			icon-image : icons/SJJB/png/WegKreuz.png
+			min-zoom : 14
+			icon-width : 14:10;17:18
+		draw : icon
+
+	target : moschee
+		define
+			icon-image : icons/SJJB/png/Moschee.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : moscheeruine
+		define
+			icon-image : icons/SJJB/png/MoscheeRuine.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
+
+	target : muslimisch
+		define
+			icon-image : icons/SJJB/png/place_of_worship_islamic.p.32.png
+			min-zoom : 14
+			icon-width : 14:14;17:26
+		draw : icon
