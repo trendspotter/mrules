@@ -1,0 +1,989 @@
+// MAPERITIVE OPTIMIZED STYLESHEET
+// Compact, zoom-aware rendering with systematic color allocation
+// Designed for SVG export to print and further design work
+
+features
+	points
+		// Natural features
+		poi natural peak : natural=peak
+		poi natural volcano : natural=volcano
+		poi natural cave : natural=cave_entrance
+		poi natural spring : natural=spring
+		poi natural waterfall : waterway=waterfall
+		
+		// Settlements
+		place country : place=country
+		place state : place=state
+		place capital : place=city AND capital=yes
+		place city : place=city AND NOT capital=yes
+		place town : place=town
+		place village : place=village
+		place hamlet : place=hamlet
+		
+		// Transport hubs
+		poi transport railway : railway=station OR railway=halt
+		poi transport tram : railway=tram_stop
+		poi transport subway : railway=subway_entrance
+		poi transport aerodrome : aeroway=aerodrome
+		poi transport bus : amenity=bus_station
+		poi transport ferry : amenity=ferry_terminal
+		
+		// Services
+		poi service fuel : amenity=fuel
+		poi service parking : amenity=parking AND NOT (parking=multi-storey OR parking=underground)
+		poi service parking multi : parking=multi-storey OR parking=underground
+		poi service charging : amenity=charging_station
+		poi service bicycle : amenity=bicycle_rental OR amenity=bicycle_repair_station
+		
+		// Commerce & food
+		poi shop supermarket : shop=supermarket
+		poi shop bakery : shop=bakery OR shop=pastry
+		poi shop restaurant : amenity=restaurant
+		poi shop cafe : amenity=cafe
+		poi shop bar : amenity=bar OR amenity=pub
+		
+		// Health & social
+		poi health hospital : amenity=hospital
+		poi health pharmacy : amenity=pharmacy
+		poi health doctor : amenity=doctors
+		
+		// Civic
+		poi civic town : amenity=townhall
+		poi civic police : amenity=police
+		poi civic fire : amenity=fire_station
+		poi civic post : amenity=post_office
+		
+		// Culture
+		poi culture museum : tourism=museum
+		poi culture theatre : amenity=theatre
+		poi culture cinema : amenity=cinema
+		
+		// Religion
+		poi religion christian : amenity=place_of_worship AND religion=christian
+		poi religion other : amenity=place_of_worship
+		
+		// Education
+		poi edu school : amenity=school
+		poi edu university : amenity=university
+		poi edu library : amenity=library
+		
+		// Leisure
+		poi leisure sport : leisure=sports_centre OR leisure=fitness_centre
+		poi leisure golf : leisure=golf_course
+		poi leisure pool : leisure=swimming_pool
+		poi leisure playground : leisure=playground
+
+	lines
+		// Highway network - primary
+		hw motorway : highway=motorway OR (highway=construction AND construction=motorway)
+		hw trunk : highway=trunk OR (highway=construction AND construction=trunk)
+		hw primary : highway=primary OR (highway=construction AND construction=primary)
+		
+		// Highway network - secondary
+		hw secondary : highway=secondary OR (highway=construction AND construction=secondary)
+		hw tertiary : highway=tertiary OR (highway=construction AND construction=tertiary)
+		hw residential : highway=residential OR (highway=construction AND construction=residential)
+		hw unclassified : highway=unclassified OR (highway=construction AND construction=unclassified)
+		
+		// Special road types
+		hw living street : highway=living_street
+		hw service : highway=service
+		hw track : highway=track
+		
+		// Pedestrian & cycling
+		hw footway : highway=footway
+		hw cycleway : highway=cycleway
+		hw bridleway : highway=bridleway
+		hw path : highway=path
+		hw steps : highway=steps
+		
+		// Railways
+		rail main : railway=rail AND NOT service AND NOT usage=branch
+		rail branch : railway=rail AND usage=branch
+		rail service : railway=rail AND service
+		rail light : railway=light_rail
+		rail tram : railway=tram
+		rail subway : railway=subway
+		
+		// Waterways - size hierarchy
+		water river : waterway=river
+		water canal : waterway=canal
+		water stream : waterway=stream
+		water small : waterway=drain OR waterway=ditch
+		
+		// Administrative boundaries
+		admin state : relation[type=boundary AND boundary=administrative AND admin_level=2].way[]
+		admin region : relation[type=boundary AND boundary=administrative AND admin_level=4].way[]
+		admin district : relation[type=boundary AND boundary=administrative AND admin_level=6].way[]
+		admin municipality : relation[type=boundary AND boundary=administrative AND admin_level=8].way[]
+		
+		// Protected areas
+		protected national : relation[type=boundary AND boundary=national_park].way[]
+		protected area : relation[type=boundary AND boundary=protected_area].way[]
+		
+		// Natural features
+		coastline : natural=coastline
+		cliff : natural=cliff
+		
+		// Contours
+		contour major : contour[elevation_multiplier=50]
+		contour minor : contour[elevation_multiplier=10]
+		
+		// Waymarked routes - visible only at appropriate zoom
+		route hiking int : relation[type=route AND route=hiking AND network=iwn].way[]
+		route hiking natl : relation[type=route AND route=foot AND network=nwn].way[]
+		route cycling int : relation[type=route AND route=bicycle AND network=icn].way[]
+		route cycling natl : relation[type=route AND route=bicycle AND network=ncn].way[]
+		route cycling reg : relation[type=route AND route=bicycle AND @isOneOf(network,rcn,lcn)].way[]
+		route mtb : relation[type=route AND route=mtb].way[]
+		
+		// Infrastructure
+		power line : power=line
+		barrier wall : barrier=wall OR barrier=fence
+
+	areas
+		// Water
+		water base : natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin
+		water seasonal : (natural=water OR landuse=reservoir) AND (intermittent=yes OR seasonal=yes)
+		
+		// Natural vegetation
+		forest : landuse=forest OR natural=wood
+		scrub : natural=scrub OR natural=shrubbery
+		grassland : natural=grassland OR natural=fell OR natural=meadow
+		wetland : natural=wetland OR natural=marsh
+		bare rock : natural=bare_rock OR natural=scree
+		sand : natural=sand OR natural=beach
+		glacier : natural=glacier
+		
+		// Agriculture
+		farmland : landuse=farmland
+		meadow : landuse=meadow
+		orchard : landuse=orchard OR landuse=vineyard
+		
+		// Built environment
+		residential : landuse=residential
+		commercial : landuse=commercial
+		retail : landuse=retail
+		industrial : landuse=industrial OR landuse=railway
+		construction : landuse=construction OR landuse=brownfield
+		
+		// Recreation
+		park : leisure=park
+		sports : leisure=sports_centre OR leisure=pitch OR leisure=track OR leisure=stadium
+		playground : leisure=playground
+		
+		// Infrastructure
+		parking : amenity=parking
+		aerodrome : aeroway=aerodrome
+		
+		// Cemeteries and special
+		cemetery : landuse=cemetery OR amenity=grave_yard
+		military : landuse=military OR military=barracks
+		
+		// Buildings
+		building : building
+
+properties
+	map-background-color : #f2efe9
+	map-background-opacity : 1
+	map-sea-color : #aad3df
+	
+	font-family : Noto Sans
+	font-weight : normal
+	font-stretch : 0.92
+	text : name
+	text-color : #222222
+	text-align-horizontal : center
+	text-align-vertical : center
+	text-orientation : flow
+	text-avoid-overlaps : false
+	map.rendering.detect-label-collision : false
+
+rules
+
+	// ========== AREA FEATURES ==========
+	
+	target : water base
+		define
+			fill-color : #aad3df
+			line-style : none
+		draw : fill
+
+	target : water seasonal
+		define
+			fill-color : #c5dfe8
+			line-style : none
+		draw : fill
+
+	target : forest
+		define
+			fill-color : #add19e
+			line-style : none
+		draw : fill
+		define
+			text : name
+			text-color : #2a6b1a
+			font-size : 10:8;14:11;18:15
+			text-orientation : flow
+			min-zoom : 11
+			text-halo-width : 0
+		draw : text
+
+	target : scrub
+		define
+			fill-color : #c8d7ab
+			line-style : none
+		draw : fill
+
+	target : grassland
+		define
+			fill-color : #d5e8b0
+			line-style : none
+		draw : fill
+
+	target : meadow
+		define
+			fill-color : #d5e8b0
+			line-style : none
+		draw : fill
+
+	target : wetland
+		define
+			fill-color : #d3e8d3
+			line-style : none
+		draw : fill
+
+	target : bare rock
+		define
+			fill-color : #c5c3c3
+			line-style : none
+		draw : fill
+
+	target : sand
+		define
+			fill-color : #f5e9c6
+			line-style : none
+		draw : fill
+
+	target : glacier
+		define
+			fill-color : #e0f0f5
+			line-style : none
+		draw : fill
+
+	target : farmland
+		define
+			fill-color : #eef0d5
+			line-style : none
+		draw : fill
+
+	target : orchard
+		define
+			fill-color : #aedfa3
+			line-style : none
+		draw : fill
+
+	target : residential
+		define
+			fill-color : #e0dfdf
+			line-style : none
+		draw : fill
+
+	target : commercial
+		define
+			fill-color : #f2dad9
+			line-style : none
+		draw : fill
+
+	target : retail
+		define
+			fill-color : #ffd6d1
+			line-style : none
+		draw : fill
+
+	target : industrial
+		define
+			fill-color : #ebdbe8
+			line-style : none
+		draw : fill
+
+	target : construction
+		define
+			fill-color : #c7c7b4
+			line-style : none
+		draw : fill
+
+	target : park
+		define
+			fill-color : #c8facc
+			line-style : none
+		draw : fill
+		define
+			text : name
+			text-color : #2a6b1a
+			font-size : 10:8;14:11;18:15
+			text-orientation : flow
+			min-zoom : 12
+			text-halo-width : 0
+		draw : text
+
+	target : sports
+		define
+			fill-color : #88e0be
+			line-style : none
+		draw : fill
+
+	target : playground
+		define
+			fill-color : #ccfef0
+			line-style : none
+		draw : fill
+
+	target : parking
+		define
+			min-zoom : 13
+			fill-color : #eeeeee
+			line-style : none
+		draw : fill
+
+	target : aerodrome
+		define
+			fill-color : #e9e8e3
+			line-style : none
+		draw : fill
+
+	target : cemetery
+		define
+			fill-color : #aacbaf
+			line-style : none
+		draw : fill
+
+	target : military
+		define
+			fill-color : #f55555
+			line-style : none
+		draw : fill
+
+	target : building
+		define
+			min-zoom : 13
+			fill-color : #cfcfcf
+			line-style : none
+		draw : fill
+
+	// ========== LINE FEATURES ==========
+	
+	// Motorways & major routes
+	target : hw motorway
+		define
+			min-zoom : 4
+			line-color : #f76f00
+			line-width : 4:0.8;6:1.2;8:1.8;10:2.5;12:3.5;14:4.5;16:6
+			line-style : solid
+		draw : line
+		define
+			text : ref
+			text-color : #ffffff
+			font-size : 6:7;8:9;10:11;12:13
+			text-background-color : #f76f00
+			text-halo-width : 0
+			min-zoom : 8
+		draw : text
+
+	target : hw trunk
+		define
+			min-zoom : 5
+			line-color : #ff9933
+			line-width : 4:0.6;6:1;8:1.5;10:2;12:3;14:3.8;16:5
+			line-style : solid
+		draw : line
+		define
+			text : ref
+			text-color : #ffffff
+			font-size : 6:6;8:8;10:10;12:12
+			text-background-color : #ff9933
+			text-halo-width : 0
+			min-zoom : 9
+		draw : text
+
+	target : hw primary
+		define
+			min-zoom : 6
+			line-color : #ffcc33
+			line-width : 5:0.5;7:0.9;9:1.3;11:1.8;13:2.5;15:3.5;17:4.5
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #333333
+			font-size : 8:8;11:10;14:12;17:14
+			text-halo-width : 0
+			min-zoom : 10
+		draw : text
+
+	target : hw secondary
+		define
+			min-zoom : 7
+			line-color : #ffdd77
+			line-width : 6:0.4;8:0.8;10:1.2;12:1.6;14:2.2;16:3;18:4
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #333333
+			font-size : 10:8;12:10;14:11;16:12
+			text-halo-width : 0
+			min-zoom : 12
+		draw : text
+
+	target : hw tertiary
+		define
+			min-zoom : 8
+			line-color : #f0f0f0
+			line-width : 7:0.3;9:0.7;11:1;13:1.4;15:1.9;17:2.5
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #333333
+			font-size : 11:7;13:9;15:10;17:11
+			text-halo-width : 0
+			min-zoom : 14
+		draw : text
+
+	target : hw residential
+		define
+			min-zoom : 9
+			line-color : #ffffff
+			line-width : 8:0.3;10:0.6;12:0.9;14:1.2;16:1.6;18:2.2
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #444444
+			font-size : 12:6;14:8;16:9;18:10
+			text-halo-width : 0
+			min-zoom : 15
+		draw : text
+
+	target : hw unclassified
+		define
+			min-zoom : 10
+			line-color : #f5f5f5
+			line-width : 9:0.25;11:0.5;13:0.8;15:1.1;17:1.5
+			line-style : solid
+		draw : line
+
+	target : hw living street
+		define
+			min-zoom : 12
+			line-color : #f5f5f5
+			line-width : 11:0.4;13:0.7;15:1;17:1.4
+			line-style : solid
+		draw : line
+
+	target : hw service
+		define
+			min-zoom : 13
+			line-color : #e8e8e8
+			line-width : 12:0.3;14:0.5;16:0.8;18:1.2
+			line-style : solid
+		draw : line
+
+	target : hw track
+		define
+			min-zoom : 11
+			line-color : #ccaa88
+			line-width : 10:0.4;12:0.7;14:1;16:1.5;18:2
+			line-style : dashed
+		draw : line
+
+	// Pedestrian infrastructure
+	target : hw footway
+		define
+			min-zoom : 13
+			line-color : #bb9966
+			line-width : 12:0.3;14:0.5;16:0.8;18:1.2
+			line-style : dashed
+		draw : line
+
+	target : hw cycleway
+		define
+			min-zoom : 12
+			line-color : #33cc99
+			line-width : 11:0.4;13:0.7;15:1;17:1.5;19:2
+			line-style : dashed
+		draw : line
+
+	target : hw bridleway
+		define
+			min-zoom : 13
+			line-color : #dd9999
+			line-width : 12:0.3;14:0.6;16:0.9;18:1.3
+			line-style : dotted
+		draw : line
+
+	target : hw path
+		define
+			min-zoom : 14
+			line-color : #999999
+			line-width : 13:0.2;15:0.4;17:0.7;19:1
+			line-style : dotted
+		draw : line
+
+	target : hw steps
+		define
+			min-zoom : 14
+			line-color : #8899aa
+			line-width : 14:0.3;16:0.6;18:1
+			line-style : dotted
+		draw : line
+
+	// Railways
+	target : rail main
+		define
+			min-zoom : 6
+			line-color : #440000
+			line-width : 6:0.5;8:0.8;10:1.2;12:1.6;14:2.2;16:3
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #440000
+			font-size : 10:8;12:9;14:10;16:11
+			text-halo-width : 0
+			min-zoom : 11
+		draw : text
+
+	target : rail branch
+		define
+			min-zoom : 8
+			line-color : #660000
+			line-width : 8:0.4;10:0.7;12:1;14:1.4;16:2
+			line-style : solid
+		draw : line
+
+	target : rail light
+		define
+			min-zoom : 10
+			line-color : #dd4444
+			line-width : 10:0.4;12:0.7;14:1;16:1.5;18:2
+			line-style : solid
+		draw : line
+
+	target : rail tram
+		define
+			min-zoom : 11
+			line-color : #ff6666
+			line-width : 11:0.5;13:0.8;15:1.2;17:1.6;19:2.2
+			line-style : solid
+		draw : line
+
+	target : rail subway
+		define
+			min-zoom : 10
+			line-color : #0066ff
+			line-width : 10:0.4;12:0.7;14:1;16:1.5;18:2
+			line-style : solid
+		draw : line
+
+	// Waterways
+	target : water river
+		define
+			min-zoom : 5
+			line-color : #5588dd
+			line-width : 5:0.6;7:0.9;9:1.3;11:1.8;13:2.4;15:3.2;17:4.2;19:5.5
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #336699
+			font-size : 7:7;10:9;12:11;14:13;16:14
+			text-orientation : flow
+			text-halo-width : 0
+			min-zoom : 9
+		draw : text
+
+	target : water canal
+		define
+			min-zoom : 8
+			line-color : #77aadd
+			line-width : 8:0.5;10:0.8;12:1.2;14:1.6;16:2.2;18:3
+			line-style : solid
+		draw : line
+		define
+			text : name
+			text-color : #336699
+			font-size : 10:7;12:9;14:11;16:12
+			text-halo-width : 0
+			min-zoom : 11
+		draw : text
+
+	target : water stream
+		define
+			min-zoom : 10
+			line-color : #99ccee
+			line-width : 10:0.3;12:0.6;14:0.9;16:1.3;18:1.8
+			line-style : solid
+		draw : line
+
+	target : water small
+		define
+			min-zoom : 12
+			line-color : #aaddee
+			line-width : 12:0.2;14:0.4;16:0.7;18:1
+			line-style : solid
+		draw : line
+
+	// Boundaries
+	target : admin state
+		define
+			min-zoom : 2
+			line-color : #cc0000
+			line-width : 2:0.4;4:0.6;6:0.9;8:1.2;10:1.8;12:2.4;14:3
+			line-style : dashed
+		draw : line
+
+	target : admin region
+		define
+			min-zoom : 4
+			line-color : #dd4444
+			line-width : 5:0.3;7:0.6;9:0.9;11:1.2;13:1.8;15:2.4
+			line-style : dashed
+		draw : line
+
+	target : admin district
+		define
+			min-zoom : 7
+			line-color : #ee7777
+			line-width : 8:0.2;10:0.5;12:0.8;14:1.1;16:1.6
+			line-style : dotted
+		draw : line
+
+	target : admin municipality
+		define
+			min-zoom : 10
+			line-color : #eeaaaa
+			line-width : 11:0.2;13:0.4;15:0.7;17:1
+			line-style : dotted
+		draw : line
+
+	// Protected areas
+	target : protected national
+		define
+			min-zoom : 7
+			line-color : #339933
+			line-width : 8:0.5;10:0.8;12:1.2;14:1.8;16:2.4
+			line-style : dashed
+		draw : line
+
+	target : protected area
+		define
+			min-zoom : 9
+			line-color : #66cc66
+			line-width : 10:0.3;12:0.6;14:1;16:1.5
+			line-style : dashed
+		draw : line
+
+	// Natural features
+	target : coastline
+		define
+			min-zoom : 3
+			line-color : #333333
+			line-width : 4:0.3;6:0.5;8:0.8;10:1.2;12:1.8;14:2.4;16:3.2
+			line-style : solid
+		draw : line
+
+	target : cliff
+		define
+			min-zoom : 10
+			line-color : #996633
+			line-width : 11:0.3;13:0.6;15:0.9;17:1.3;19:1.8
+			line-style : dashed
+		draw : line
+
+	// Contours
+	target : contour major
+		define
+			min-zoom : 11
+			line-color : #996633
+			line-width : 12:0.3;14:0.5;16:0.8;18:1.2
+			line-style : solid
+		draw : line
+		define
+			text : ele
+			text-color : #664411
+			font-size : 11:6;13:7;15:8;17:9
+			text-orientation : flow
+			text-halo-width : 0
+			min-zoom : 12
+		draw : text
+
+	target : contour minor
+		define
+			min-zoom : 13
+			line-color : #cc9966
+			line-width : 14:0.15;16:0.4;18:0.7
+			line-style : solid
+		draw : line
+
+	// Waymarked routes - overlay style
+	target : route hiking int
+		define
+			min-zoom : 9
+			line-color : #ff00ff
+			line-width : 9:0.8;11:1.3;13:1.8;15:2.4;17:3.2
+			line-style : dashed
+			line-offset : 0.8
+		draw : line
+
+	target : route hiking natl
+		define
+			min-zoom : 10
+			line-color : #ff3399
+			line-width : 10:0.6;12:1;14:1.5;16:2.2;18:3
+			line-style : dashed
+			line-offset : 0.8
+		draw : line
+
+	target : route cycling int
+		define
+			min-zoom : 10
+			line-color : #0099ff
+			line-width : 10:0.6;12:1;14:1.5;16:2.2;18:3
+			line-style : dashed
+			line-offset : 0.8
+		draw : line
+
+	target : route cycling natl
+		define
+			min-zoom : 11
+			line-color : #0066cc
+			line-width : 11:0.5;13:0.9;15:1.3;17:1.9;19:2.6
+			line-style : dashed
+			line-offset : 0.8
+		draw : line
+
+	target : route cycling reg
+		define
+			min-zoom : 12
+			line-color : #3399ff
+			line-width : 12:0.4;14:0.8;16:1.2;18:1.8
+			line-style : dashed
+			line-offset : 0.6
+		draw : line
+
+	target : route mtb
+		define
+			min-zoom : 11
+			line-color : #ff9900
+			line-width : 11:0.5;13:0.9;15:1.3;17:1.9;19:2.6
+			line-style : dashed
+			line-offset : 0.8
+		draw : line
+
+	// Infrastructure
+	target : power line
+		define
+			min-zoom : 12
+			line-color : #ffaa00
+			line-width : 13:0.3;15:0.6;17:1;19:1.5
+			line-style : dotted
+		draw : line
+
+	target : barrier wall
+		define
+			min-zoom : 14
+			line-color : #999999
+			line-width : 14:0.3;16:0.6;18:1
+			line-style : solid
+		draw : line
+
+	// ========== POINT FEATURES ==========
+	
+	target : place country
+		define
+			min-zoom : 2
+			icon-width : 3:8;5:12;7:16;9:20
+			text : name
+			text-color : #333333
+			font-size : 3:10;5:14;7:18;9:22
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : place capital
+		define
+			min-zoom : 4
+			icon-width : 5:10;7:14;9:18;11:22
+			text : name
+			text-color : #ff0000
+			font-size : 5:11;7:14;9:16;11:18
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : place city
+		define
+			min-zoom : 5
+			icon-width : 6:8;8:12;10:16;12:20
+			text : name
+			text-color : #333333
+			font-size : 6:10;8:12;10:14;12:16
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : place town
+		define
+			min-zoom : 7
+			icon-width : 8:6;10:10;12:14;14:18
+			text : name
+			text-color : #555555
+			font-size : 8:8;10:10;12:12;14:14
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : place village
+		define
+			min-zoom : 9
+			icon-width : 10:5;12:8;14:12;16:16
+			text : name
+			text-color : #666666
+			font-size : 10:7;12:9;14:11;16:13
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : place hamlet
+		define
+			min-zoom : 12
+			icon-width : 12:4;14:6;16:10;18:14
+			text : name
+			text-color : #777777
+			font-size : 12:6;14:8;16:10;18:12
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi natural peak
+		define
+			min-zoom : 11
+			icon-width : 12:6;14:9;16:12;18:15
+			text : name
+			text-color : #704d00
+			font-size : 12:7;14:9;16:11;18:13
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi transport railway
+		define
+			min-zoom : 8
+			icon-width : 9:6;11:9;13:12;15:15
+			text : name
+			text-color : #440000
+			font-size : 9:8;11:10;13:12;15:14
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi transport aerodrome
+		define
+			min-zoom : 7
+			icon-width : 8:8;10:12;12:16;14:20
+			text : name
+			text-color : #0066cc
+			font-size : 8:9;10:11;12:13;14:15
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi service fuel
+		define
+			min-zoom : 13
+			icon-width : 14:5;16:8;18:11;19:14
+			text : name
+			text-color : #ffaa00
+			font-size : 14:6;16:8;18:10;19:12
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi shop supermarket
+		define
+			min-zoom : 14
+			icon-width : 15:5;17:8;19:11
+			text : name
+			text-color : #dd0000
+			font-size : 15:6;17:8;19:10
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi health hospital
+		define
+			min-zoom : 11
+			icon-width : 12:6;14:9;16:12;18:15
+			text : name
+			text-color : #dd0000
+			font-size : 12:8;14:10;16:12;18:14
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi health pharmacy
+		define
+			min-zoom : 14
+			icon-width : 15:5;17:8;19:11
+			text : name
+			text-color : #00aa00
+			font-size : 15:6;17:8;19:10
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi civic town
+		define
+			min-zoom : 12
+			icon-width : 13:6;15:9;17:12;19:15
+			text : name
+			text-color : #0066cc
+			font-size : 13:8;15:10;17:12;19:14
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi culture museum
+		define
+			min-zoom : 13
+			icon-width : 14:5;16:8;18:11;19:14
+			text : name
+			text-color : #993333
+			font-size : 14:7;16:9;18:11;19:13
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi edu school
+		define
+			min-zoom : 12
+			icon-width : 13:5;15:8;17:11;19:14
+			text : name
+			text-color : #dd6600
+			font-size : 13:7;15:9;17:11;19:13
+			text-halo-width : 0
+		draw : icon
+		draw : text
+
+	target : poi leisure sport
+		define
+			min-zoom : 13
+			icon-width : 14:5;16:8;18:11;19:14
+			text : name
+			text-color : #0099cc
+			font-size : 14:6;16:8;18:10;19:12
+			text-halo-width : 0
+		draw : icon
+		draw : text
