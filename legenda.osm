@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm version="0.6" generator="Handcrafted for Maperitive">
+
+  <!-- ========================================== -->
+  <!-- 1. BODY (BODOVÉ ZNAČKY / POI)             -->
+  <!-- ========================================== -->
+  
+  <!-- Vrchol / Kopec -->
+  <node id="-101" lat="0.05" lon="0.01" version="1">
+    <tag k="natural" v="peak"/>
+    <tag k="name" v="Vrchol / Kvóta"/>
+  </node>
+  
+  <!-- Pramen vody -->
+  <node id="-102" lat="0.04" lon="0.01" version="1">
+    <tag k="natural" v="spring"/>
+    <tag k="name" v="Pramen / Studánka"/>
+  </node>
+  
+  <!-- Rozcestník -->
+  <node id="-103" lat="0.03" lon="0.01" version="1">
+    <tag k="information" v="guidepost"/>
+    <tag k="name" v="Turistický rozcestník"/>
+  </node>
+  
+  <!-- Hrad / Zámek -->
+  <node id="-104" lat="0.02" lon="0.01" version="1">
+    <tag k="historic" v="castle"/>
+    <tag k="name" v="Hrad nebo zámek"/>
+  </node>
+
+  <!-- ========================================== -->
+  <!-- 2. LINIE (CESTY A STEZKY)                  -->
+  <!-- ========================================== -->
+  
+  <!-- Hlavní silnice (Uzly -201 a -202) -->
+  <node id="-201" lat="0.05" lon="0.03" version="1"/>
+  <node id="-202" lat="0.05" lon="0.06" version="1"/>
+  <way id="-1001" version="1">
+    <nd ref="-201"/>
+    <nd ref="-202"/>
+    <tag k="highway" v="primary"/>
+    <tag k="name" v="Hlavní silnice"/>
+  </way>
+
+  <!-- Vedlejší silnice (Uzly -203 a -204) -->
+  <node id="-203" lat="0.04" lon="0.03" version="1"/>
+  <node id="-204" lat="0.04" lon="0.06" version="1"/>
+  <way id="-1002" version="1">
+    <nd ref="-203"/>
+    <nd ref="-204"/>
+    <tag k="highway" v="secondary"/>
+    <tag k="name" v="Vedlejší silnice"/>
+  </way>
+
+  <!-- Lesní / Polní cesta (Uzly -205 a -206) -->
+  <node id="-205" lat="0.03" lon="0.03" version="1"/>
+  <node id="-206" lat="0.03" lon="0.06" version="1"/>
+  <way id="-1003" version="1">
+    <nd ref="-205"/>
+    <nd ref="-206"/>
+    <tag k="highway" v="track"/>
+    <tag k="tracktype" v="grade2"/>
+    <tag k="name" v="Zpevněná lesní cesta"/>
+  </way>
+
+  <!-- Turistická pěšina (Uzly -207 a -208) -->
+  <node id="-207" lat="0.02" lon="0.03" version="1"/>
+  <node id="-208" lat="0.02" lon="0.06" version="1"/>
+  <way id="-1004" version="1">
+    <nd ref="-207"/>
+    <nd ref="-208"/>
+    <tag k="highway" v="footway"/>
+    <tag k="sac_scale" v="hiking"/>
+    <tag k="name" v="Turistická stezka / Pěšina"/>
+  </way>
+
+  <!-- Potok / Řeka (Uzly -209 a -210) -->
+  <node id="-209" lat="0.01" lon="0.03" version="1"/>
+  <node id="-210" lat="0.01" lon="0.06" version="1"/>
+  <way id="-1005" version="1">
+    <nd ref="-209"/>
+    <nd ref="-210"/>
+    <tag k="waterway" v="stream"/>
+    <tag k="name" v="Vodní tok (Potok)"/>
+  </way>
+
+  <!-- ========================================== -->
+  <!-- 3. PLOCHY (LESY, LOUKY, VODA)              -->
+  <!-- ========================================== -->
+  
+  <!-- Les (Čtverec z uzlů -301 až -304) -->
+  <node id="-301" lat="0.05" lon="0.08" version="1"/>
+  <node id="-302" lat="0.05" lon="0.11" version="1"/>
+  <node id="-303" lat="0.04" lon="0.11" version="1"/>
+  <node id="-304" lat="0.04" lon="0.08" version="1"/>
+  <way id="-2001" version="1">
+    <nd ref="-301"/>
+    <nd ref="-302"/>
+    <nd ref="-303"/>
+    <nd ref="-304"/>
+    <nd ref="-301"/> <!-- Uzavření plochy -->
+    <tag k="landuse" v="forest"/>
+    <tag k="name" v="Lesní porost"/>
+  </way>
+
+  <!-- Louka / Pastvina (Čtverec z uzlů -305 až -308) -->
+  <node id="-305" lat="0.03" lon="0.08" version="1"/>
+  <node id="-306" lat="0.03" lon="0.11" version="1"/>
+  <node id="-307" lat="0.02" lon="0.11" version="1"/>
+  <node id="-308" lat="0.02" lon="0.08" version="1"/>
+  <way id="-2002" version="1">
+    <nd ref="-305"/>
+    <nd ref="-306"/>
+    <nd ref="-307"/>
+    <nd ref="-308"/>
+    <nd ref="-305"/>
+    <tag k="landuse" v="meadow"/>
+    <tag k="name" v="Louka / Travnatá plocha"/>
+  </way>
+
+  <!-- Vodní plocha / Rybník (Čtverec z uzlů -309 až -312) -->
+  <node id="-309" lat="0.01" lon="0.08" version="1"/>
+  <node id="-310" lat="0.01" lon="0.11" version="1"/>
+  <node id="-311" lat="0.00" lon="0.11" version="1"/>
+  <node id="-312" lat="0.00" lon="0.08" version="1"/>
+  <way id="-2003" version="1">
+    <nd ref="-309"/>
+    <nd ref="-310"/>
+    <nd ref="-311"/>
+    <nd ref="-312"/>
+    <nd ref="-309"/>
+    <tag k="natural" v="water"/>
+    <tag k="water" v="reservoir"/>
+    <tag k="name" v="Vodní plocha (Rybník/Jezero)"/>
+  </way>
+
+</osm>
