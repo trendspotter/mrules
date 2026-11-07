@@ -1,795 +1,305 @@
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Maperitive Rules Studio</title>
-    <style>
-      :root {
-        --bg: #f8fafc;
-        --panel: #ffffff;
-        --border: #cbd5e1;
-        --muted: #64748b;
-        --text: #0f172a;
-        --accent: #2563eb;
-        --accent-soft: #dbeafe;
-        --success: #166534;
-        --warning: #9a5b00;
-        --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
-        --radius: 16px;
-      }
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Maperitive Rules Studio</title>
+  <style>
+    :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#172033;background:#f1f5f9;font-synthesis:none}*{box-sizing:border-box}body{margin:0}.app{max-width:1600px;margin:auto;padding:20px}.header{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}.header h1{font-size:clamp(1.45rem,3vw,2rem);margin:0}.header p{margin:6px 0 0;color:#64748b}.actions{display:flex;gap:8px;flex-wrap:wrap}button,.button{border:1px solid #cbd5e1;border-radius:9px;background:#fff;padding:9px 12px;font:inherit;font-weight:650;cursor:pointer;color:#172033}button:hover,.button:hover{background:#eff6ff}button.primary{background:#1d4ed8;color:#fff;border-color:#1d4ed8}button.primary:hover{background:#1e40af}.layout{display:grid;grid-template-columns:minmax(320px,470px) minmax(0,1fr);gap:16px;align-items:start}.panel{background:#fff;border:1px solid #dbe2ea;border-radius:14px;box-shadow:0 6px 20px #0f172a0a}.controls{padding:14px}.group{border:1px solid #e2e8f0;border-radius:11px;margin:0 0 11px;background:#fbfdff}.group summary{padding:11px 12px;font-weight:750;cursor:pointer}.group-body{padding:0 12px 10px}.field{display:grid;grid-template-columns:minmax(0,1fr) minmax(100px,150px);align-items:center;gap:10px;padding:5px 0;font-size:.9rem}.field label{display:flex;align-items:center;gap:7px}.field input[type=color]{height:32px;width:48px;padding:2px;justify-self:end}.field input[type=number],.field input[type=text],.field select{width:100%;min-width:0;border:1px solid #cbd5e1;border-radius:7px;padding:7px;background:white;color:#172033;font:inherit}.field input[type=checkbox]{accent-color:#1d4ed8}.hint{font-size:.78rem;color:#64748b;line-height:1.45;margin:6px 0}.editor{padding:13px;position:sticky;top:10px}.editor-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:9px}.editor h2{font-size:1.05rem;margin:0}.state{font-size:.82rem;color:#64748b}.state.dirty{color:#a16207;font-weight:700}textarea{width:100%;min-height:75vh;resize:vertical;border:1px solid #334155;border-radius:9px;padding:13px;background:#0f172a;color:#e2e8f0;font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:4;white-space:pre;overflow:auto}.editor-tools{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.notice{font-size:.8rem;color:#475569;line-height:1.45;margin:10px 0 0}.status{min-height:20px;margin-top:8px;font-size:.85rem;color:#166534}.advanced{border-top:1px solid #e2e8f0;padding-top:8px;margin-top:8px}.advanced summary{font-size:.88rem}.validation{color:#9a3412}.file-input{display:none}@media(max-width:950px){.layout{grid-template-columns:1fr}.editor{position:static}textarea{min-height:55vh}.header{align-items:flex-start;flex-direction:column}}@media(prefers-color-scheme:dark){:root{color:#e2e8f0;background:#0b1220}.panel,.group{background:#111827;border-color:#334155}.group{background:#131d2d}.field input[type=number],.field input[type=text],.field select,button{background:#172033;color:#e2e8f0;border-color:#475569}.header p,.hint,.notice,.state{color:#94a3b8}}
+  </style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="header">
+    <div><h1>Maperitive Rules Studio</h1><p>Vizuální nastavení i přímá editace pravidel. Stahovaný soubor vždy odpovídá textu v editoru.</p></div>
+    <div class="actions"><button id="preset" type="button">Načíst předvolbu</button><button class="primary" id="rebuild" type="button">Přepsat editor nastavením GUI</button></div>
+  </header>
+  <div class="layout">
+    <aside class="panel controls" aria-label="Nastavení mapových pravidel">
+      <details class="group" open><summary>Obecné</summary><div class="group-body">
+        <div class="field"><label for="styleName">Název stylu</label><input id="styleName" type="text" value="Krumlov Art Map"></div>
+        <div class="field"><label for="background">Pozadí mapy</label><input id="background" type="color" value="#f4eedf"></div>
+        <div class="field"><label for="sea">Barva moře</label><input id="sea" type="color" value="#b9d9df"></div>
+        <div class="field"><label for="defaultFont">Výchozí písmo</label><input id="defaultFont" type="text" value="DejaVu Sans"></div>
+        <p class="hint">Maperitive používá měřítko zoomu v pravidlech; při potřebě ještě přesnějších podmínek upravte ručně bloky v editoru.</p>
+      </div></details>
 
-      * { box-sizing: border-box; }
+      <details class="group" open><summary>Plochy – voda, krajina, zástavba</summary><div class="group-body">
+        <div class="field"><label><input id="waterOn" type="checkbox" checked> Voda (natural=water, reservoir)</label><input id="waterColor" type="color" value="#8fcbd4"></div>
+        <div class="field"><label for="waterOpacity">Průhlednost vody (fill-opacity)</label><input id="waterOpacity" type="number" min="0" max="1" step="0.05" value="0.9"></div>
+        <div class="field"><label><input id="wetlandOn" type="checkbox" checked> Mokřady</label><input id="wetlandColor" type="color" value="#9bc7c2"></div>
+        <div class="field"><label><input id="forestOn" type="checkbox" checked> Lesy</label><input id="forestColor" type="color" value="#9caf83"></div>
+        <div class="field"><label><input id="woodOn" type="checkbox"> Křoviny / scrub</label><input id="woodColor" type="color" value="#b5c29a"></div>
+        <div class="field"><label><input id="farmlandOn" type="checkbox"> Zemědělská půda</label><input id="farmlandColor" type="color" value="#e4d9a8"></div>
+        <div class="field"><label><input id="meadowOn" type="checkbox" checked> Louky a traviny</label><input id="meadowColor" type="color" value="#d8dba8"></div>
+        <div class="field"><label><input id="sandOn" type="checkbox"> Písek a pláže</label><input id="sandColor" type="color" value="#e7d4a2"></div>
+        <div class="field"><label><input id="buildingOn" type="checkbox" checked> Budovy</label><input id="buildingColor" type="color" value="#725d55"></div>
+        <div class="field"><label for="landOpacity">Průhlednost ostatních ploch</label><input id="landOpacity" type="number" min="0" max="1" step="0.05" value="0.85"></div>
+        <div class="field"><label for="areaOutline">Obrys ploch (barva)</label><input id="areaOutline" type="color" value="#ffffff"></div>
+        <div class="field"><label for="areaOutlineWidth">Šířka obrysu</label><input id="areaOutlineWidth" type="number" min="0" max="10" step="0.1" value="0"></div>
+      </div></details>
 
-      body {
-        margin: 0;
-        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-        background: linear-gradient(180deg, #eef4ff 0%, #f8fafc 100%);
-        color: var(--text);
-      }
+      <details class="group" open><summary>Linie – komunikace, voda, železnice</summary><div class="group-body">
+        <p class="hint">Pro každou třídu lze nastavit zobrazení, barvu, šířku, průhlednost a popisek názvem nebo referencí.</p>
+        <div class="field"><label><input id="riverOn" type="checkbox" checked> Řeky, potoky a kanály</label><input id="riverColor" type="color" value="#3c91a3"></div>
+        <div class="field"><label for="riverWidth">Šířka vodních linií</label><input id="riverWidth" type="number" min="0.1" max="30" step="0.1" value="1.4"></div>
+        <div class="field"><label for="riverLabel">Popisek vodních linií</label><select id="riverLabel"><option value="">Bez popisku</option><option value="name">name</option></select></div>
+        <div class="field"><label><input id="motorwayOn" type="checkbox" checked> Dálnice</label><input id="motorwayColor" type="color" value="#b44f3d"></div>
+        <div class="field"><label for="motorwayWidth">Šířka dálnic</label><input id="motorwayWidth" type="number" min="0.1" max="30" step="0.1" value="3.2"></div>
+        <div class="field"><label><input id="trunkOn" type="checkbox" checked> Silnice trunk / primary</label><input id="trunkColor" type="color" value="#c96b45"></div>
+        <div class="field"><label for="trunkWidth">Šířka trunk / primary</label><input id="trunkWidth" type="number" min="0.1" max="30" step="0.1" value="2.6"></div>
+        <div class="field"><label><input id="secondaryOn" type="checkbox" checked> Sekundární / terciární</label><input id="secondaryColor" type="color" value="#d8a477"></div>
+        <div class="field"><label for="secondaryWidth">Šířka sekundárních</label><input id="secondaryWidth" type="number" min="0.1" max="30" step="0.1" value="1.7"></div>
+        <div class="field"><label><input id="localOn" type="checkbox" checked> Místní a obslužné silnice</label><input id="localColor" type="color" value="#ead3ad"></div>
+        <div class="field"><label for="localWidth">Šířka místních silnic</label><input id="localWidth" type="number" min="0.1" max="30" step="0.1" value="1.1"></div>
+        <div class="field"><label><input id="pathOn" type="checkbox" checked> Pěší, cyklo a lesní cesty</label><input id="pathColor" type="color" value="#775a41"></div>
+        <div class="field"><label for="pathWidth">Šířka cest</label><input id="pathWidth" type="number" min="0.1" max="20" step="0.1" value="0.8"></div>
+        <div class="field"><label for="pathStyle">Styl cest</label><select id="pathStyle"><option value="solid">solid</option><option value="dash" selected>dash</option><option value="dot">dot</option></select></div>
+        <div class="field"><label><input id="railOn" type="checkbox" checked> Železnice</label><input id="railColor" type="color" value="#7b7f8a"></div>
+        <div class="field"><label for="railWidth">Šířka železnice</label><input id="railWidth" type="number" min="0.1" max="20" step="0.1" value="1"></div>
+        <div class="field"><label><input id="boundaryOn" type="checkbox"> Hranice administrativních území</label><input id="boundaryColor" type="color" value="#9c6a9c"></div>
+        <div class="field"><label for="boundaryWidth">Šířka hranic</label><input id="boundaryWidth" type="number" min="0.1" max="10" step="0.1" value="0.8"></div>
+        <div class="field"><label for="lineOpacity">Průhlednost linií</label><input id="lineOpacity" type="number" min="0" max="1" step="0.05" value="1"></div>
+      </div></details>
 
-      #mrules-studio {
-        max-width: 1500px;
-        margin: 24px auto;
-        background: rgba(255,255,255,0.7);
-        border: 1px solid rgba(148,163,184,0.35);
-        border-radius: 24px;
-        box-shadow: var(--shadow);
-        padding: 18px;
-      }
+      <details class="group" open><summary>Popisky linií</summary><div class="group-body">
+        <div class="field"><label><input id="roadLabels" type="checkbox" checked> Popisovat silnice</label><input id="roadLabelColor" type="color" value="#49372b"></div>
+        <div class="field"><label for="roadLabelTag">Hodnota popisku</label><select id="roadLabelTag"><option value="name">name</option><option value="ref">ref (číslo silnice)</option></select></div>
+        <div class="field"><label for="roadFontSize">Velikost písma</label><input id="roadFontSize" type="number" min="4" max="48" step="1" value="9"></div>
+        <div class="field"><label for="roadFontStyle">Styl písma</label><select id="roadFontStyle"><option value="normal">normal</option><option value="italic">italic</option></select></div>
+        <div class="field"><label for="roadFontWeight">Řez písma</label><select id="roadFontWeight"><option value="normal">normal</option><option value="bold">bold</option></select></div>
+        <div class="field"><label for="roadOffsetH">Odsazení vodorovně</label><input id="roadOffsetH" type="number" min="-50" max="50" step="1" value="0"></div>
+        <div class="field"><label for="roadOffsetV">Odsazení od linie svisle</label><input id="roadOffsetV" type="number" min="-50" max="50" step="1" value="0"></div>
+        <div class="field"><label for="roadHaloColor">Barva okraje (halo)</label><input id="roadHaloColor" type="color" value="#ffffff"></div>
+        <div class="field"><label for="roadHaloWidth">Šířka okraje</label><input id="roadHaloWidth" type="number" min="0" max="20" step="0.5" value="1.5"></div>
+        <div class="field"><label for="roadTextAlign">Vodorovné zarovnání</label><select id="roadTextAlign"><option value="center">center</option><option value="left">left</option><option value="right">right</option></select></div>
+        <p class="hint">Odsazení a zarovnání jsou samostatné textové vlastnosti. Generátor nepřidává neověřenou volbu pro udržení textu rovně; přesnou orientaci upravte v editoru jen podle vlastností podporovaných vaší verzí Maperitive.</p>
+      </div></details>
 
-      .topbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: 16px;
-        padding: 6px 6px 18px;
-      }
+      <details class="group" open><summary>Popisky bodů a ploch</summary><div class="group-body">
+        <div class="field"><label><input id="placeOn" type="checkbox" checked> Sídelní názvy (place)</label><input id="placeColor" type="color" value="#302821"></div>
+        <div class="field"><label for="placeFontSize">Velikost sídelních názvů</label><input id="placeFontSize" type="number" min="4" max="80" step="1" value="14"></div>
+        <div class="field"><label for="placeFontWeight">Řez sídelních názvů</label><select id="placeFontWeight"><option value="normal">normal</option><option value="bold" selected>bold</option></select></div>
+        <div class="field"><label><input id="poiOn" type="checkbox"> Turistické cíle (tourism)</label><input id="poiColor" type="color" value="#7c3aed"></div>
+        <div class="field"><label for="poiFontSize">Velikost popisku POI</label><input id="poiFontSize" type="number" min="4" max="48" step="1" value="10"></div>
+        <div class="field"><label><input id="peakOn" type="checkbox"> Vrcholy (natural=peak)</label><input id="peakColor" type="color" value="#4b5563"></div>
+        <div class="field"><label for="pointOffsetV">Svislé odsazení bodových popisků</label><input id="pointOffsetV" type="number" min="-50" max="50" step="1" value="8"></div>
+        <div class="field"><label for="pointHaloColor">Barva halo</label><input id="pointHaloColor" type="color" value="#ffffff"></div>
+        <div class="field"><label for="pointHaloWidth">Šířka halo</label><input id="pointHaloWidth" type="number" min="0" max="20" step="0.5" value="2"></div>
+        <div class="field"><label for="pointFont">Písmo popisků</label><input id="pointFont" type="text" value="DejaVu Sans"></div>
+      </div></details>
 
-      .title-wrap h1 {
-        margin: 0;
-        font-size: clamp(1.7rem, 2.5vw, 2.4rem);
-        line-height: 1.1;
-      }
+      <details class="group"><summary>Pokročilé – přidejte vlastní řádky define</summary><div class="group-body">
+        <p class="hint">Volitelné řádky vlastností pro všechny generované kreslicí bloky. Zadejte po jednom řádku, např. <code>min-zoom : 10</code>. Vkládejte pouze vlastnosti, které jsou platné v instalované verzi Maperitive.</p>
+        <textarea id="extraDefs" style="min-height:100px;background:#fff;color:#172033;white-space:pre-wrap" aria-label="Další řádky define"></textarea>
+      </div></details>
+    </aside>
 
-      .title-wrap small {
-        color: var(--muted);
-        display: block;
-        margin-top: 8px;
-      }
-
-      .actions {
-        display: flex;
-        gap: 10px;
-        flex-wrap: wrap;
-        align-items: center;
-      }
-
-      button {
-        appearance: none;
-        border: 1px solid var(--border);
-        background: #fff;
-        color: var(--text);
-        border-radius: 10px;
-        padding: 9px 14px;
-        font-size: 0.95rem;
-        font-weight: 600;
-        cursor: pointer;
-        transition: 0.15s ease;
-      }
-
-      button:hover { transform: translateY(-1px); }
-
-      button.primary {
-        background: linear-gradient(180deg, #1d4ed8, #1e40af);
-        border-color: #1e40af;
-        color: #fff;
-      }
-
-      button.secondary {
-        background: #f8fafc;
-      }
-
-      button.warn {
-        background: #fff7ed;
-        border-color: #fdba74;
-        color: #9a5b00;
-      }
-
-      .layout {
-        display: grid;
-        grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
-        gap: 18px;
-      }
-
-      .panel {
-        border: 1px solid var(--border);
-        border-radius: var(--radius);
-        background: var(--panel);
-        min-height: 200px;
-      }
-
-      .settings {
-        padding: 18px 16px 12px;
-      }
-
-      .section {
-        border: 1px solid #e2e8f0;
-        border-radius: 12px;
-        background: #f8fafc;
-        padding: 12px 12px 10px;
-        margin-bottom: 14px;
-      }
-
-      .section h3 {
-        margin: 0 0 10px;
-        font-size: 1rem;
-      }
-
-      .field {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr) auto;
-        gap: 10px;
-        align-items: center;
-        margin-bottom: 10px;
-      }
-
-      .field label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        color: var(--text);
-        font-size: 0.93rem;
-      }
-
-      .field .label-text {
-        flex: 1;
-      }
-
-      input[type="text"],
-      input[type="number"],
-      textarea,
-      select {
-        width: 100%;
-        border: 1px solid var(--border);
-        background: #fff;
-        color: var(--text);
-        border-radius: 8px;
-        padding: 8px 10px;
-        font: inherit;
-      }
-
-      input[type="color"] {
-        width: 52px;
-        height: 36px;
-        padding: 2px;
-        border: 1px solid var(--border);
-        border-radius: 8px;
-        background: white;
-      }
-
-      input[type="checkbox"] {
-        accent-color: var(--accent);
-        width: 16px;
-        height: 16px;
-      }
-
-      .short {
-        width: 90px;
-      }
-
-      .compact {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
-      }
-
-      .output-panel {
-        padding: 14px;
-        display: flex;
-        flex-direction: column;
-      }
-
-      .tabbar {
-        display: flex;
-        gap: 8px;
-        border-bottom: 1px solid var(--border);
-        margin-bottom: 12px;
-      }
-
-      .tab {
-        background: transparent;
-        border: 0;
-        border-radius: 10px 10px 0 0;
-        padding: 10px 12px 12px;
-        color: var(--muted);
-        border-bottom: 2px solid transparent;
-      }
-
-      .tab.active {
-        color: var(--text);
-        border-color: var(--accent);
-        background: var(--accent-soft);
-      }
-
-      .tab-panel {
-        display: none;
-        flex: 1;
-      }
-
-      .tab-panel.active {
-        display: flex;
-        flex-direction: column;
-      }
-
-      textarea {
-        flex: 1;
-        min-height: 620px;
-        resize: vertical;
-        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
-        font-size: 13px;
-        line-height: 1.5;
-        background: #f8fafc;
-        color: #0f172a;
-      }
-
-      .status {
-        min-height: 24px;
-        margin-top: 12px;
-        color: var(--success);
-        font-size: 0.9rem;
-        font-weight: 600;
-      }
-
-      .muted {
-        color: var(--muted);
-      }
-
-      @media (max-width: 980px) {
-        .layout {
-          grid-template-columns: 1fr;
-        }
-        textarea { min-height: 420px; }
-      }
-    </style>
-  </head>
-  <body>
-    <div id="mrules-studio">
-      <div class="topbar">
-        <div class="title-wrap">
-          <h1>Maperitive Rules Studio</h1>
-          <small>Vizuální generátor a editace .mrules s podporou přímé úpravy textu</small>
-        </div>
-        <div class="actions">
-          <button type="button" class="secondary" id="presetBtn">Nastavit předvolbu</button>
-          <button type="button" class="primary" id="generateBtn">Generovat .mrules</button>
-        </div>
+    <main class="panel editor">
+      <div class="editor-head"><h2>Výsledný soubor .mrules</h2><span id="editState" class="state">GUI a text jsou synchronizované</span></div>
+      <textarea id="rulesText" spellcheck="false" aria-label="Editovatelný obsah souboru Maperitive rules"></textarea>
+      <div class="editor-tools">
+        <button id="download" class="primary" type="button">Stáhnout .mrules</button>
+        <button id="copy" type="button">Kopírovat text</button>
+        <button id="loadFile" type="button">Načíst .mrules</button>
+        <input id="fileInput" class="file-input" type="file" accept=".mrules,.txt,text/plain">
       </div>
+      <p class="notice">Úpravy v editoru zůstávají zachované a soubor ke stažení se vytváří přímo z jeho aktuálního obsahu. Po ruční editaci se GUI samo nepřegeneruje; tlačítko „Přepsat editor nastavením GUI“ ruční text nahradí.</p>
+      <div id="status" class="status" aria-live="polite"></div>
+    </main>
+  </div>
+</div>
+<script>
+(() => {
+  const root = document.getElementById('app');
+  const $ = id => document.getElementById(id);
+  const val = id => $(id).value;
+  const isOn = id => $(id).checked;
+  const number = id => {
+    const n = Number.parseFloat(val(id));
+    return Number.isFinite(n) ? String(n) : '0';
+  };
+  const safe = text => String(text).replace(/[\r\n\t]/g, ' ').trim();
+  const state = message => { $('status').textContent = message || ''; };
+  let editingManually = false;
 
-      <div class="layout">
-        <aside class="panel settings">
-          <div class="section">
-            <h3>Obecné</h3>
-            <div class="field">
-              <label for="styleName" class="label-text">Název stylu</label>
-              <input id="styleName" type="text" value="Krumlov Art Map" />
-            </div>
-            <div class="field">
-              <label for="background" class="label-text">Pozadí mapy</label>
-              <input id="background" type="color" value="#f4eedf" />
-            </div>
-            <div class="field">
-              <label for="sea" class="label-text">Barva moře / vodního pozadí</label>
-              <input id="sea" type="color" value="#b9d9df" />
-            </div>
-          </div>
+  // Keep Maperitive comments as whole-line // comments. Never append comments to property lines.
+  function comment(text) { return '// ' + safe(text); }
+  function featureLine(type, name, selector) { return '\t' + type + '\n\t\t' + name + ' : ' + selector; }
+  function rule(target, definitions, draw) {
+    return ['target : ' + target, ...definitions.map(def => '\tdefine ' + def), '\tdraw : ' + draw].join('\n');
+  }
+  function textDefs({tag, color, size, weight='normal', style='normal', font, offsetH=0, offsetV=0, haloColor, haloWidth, align='center'}) {
+    return [
+      'text : ' + tag,
+      'font-family : ' + safe(font),
+      'font-size : ' + size,
+      'font-style : ' + style,
+      'font-weight : ' + weight,
+      'text-color : ' + color,
+      'text-halo-color : ' + haloColor,
+      'text-halo-width : ' + haloWidth,
+      'text-offset-horizontal : ' + offsetH,
+      'text-offset-vertical : ' + offsetV,
+      'text-align-horizontal : ' + align
+    ];
+  }
+  function build() {
+    const features = ['features', '\tareas'];
+    const lines = [];
+    const points = [];
+    const areaRules = [];
+    const lineRules = [];
+    const labelRules = [];
+    const pointRules = [];
 
-          <div class="section">
-            <h3>Vodstvo</h3>
-            <div class="field">
-              <label><input id="waterOn" type="checkbox" checked /> Zobrazit plochy vody</label>
-              <input id="waterFill" type="color" value="#8fcbd4" />
-            </div>
-            <div class="field">
-              <label><input id="wetlandOn" type="checkbox" checked /> Mokřady</label>
-              <input id="wetlandFill" type="color" value="#9bc7c2" />
-            </div>
-            <div class="field">
-              <label><input id="riverOn" type="checkbox" checked /> Řeky a potoky</label>
-              <input id="riverColor" type="color" value="#3c91a3" />
-            </div>
-            <div class="field">
-              <label for="riverWidth" class="label-text">Tloušťka řek</label>
-              <input id="riverWidth" type="number" min="0.1" max="15" step="0.1" value="1.4" class="short" />
-            </div>
-            <div class="field">
-              <label for="riverOpacity" class="label-text">Průhlednost řek</label>
-              <input id="riverOpacity" type="number" min="0" max="1" step="0.05" value="0.95" class="short" />
-            </div>
-          </div>
+    const areas = [
+      ['waterOn','water','natural=water OR landuse=reservoir OR waterway=riverbank'],
+      ['wetlandOn','wetland','natural=wetland OR landuse=wetland'],
+      ['forestOn','forest','natural=wood OR landuse=forest'],
+      ['woodOn','scrub','natural=scrub'],
+      ['farmlandOn','farmland','landuse=farmland OR landuse=orchard OR landuse=vineyard'],
+      ['meadowOn','meadow','landuse=meadow OR natural=grassland'],
+      ['sandOn','sand','natural=sand OR natural=beach'],
+      ['buildingOn','building','building']
+    ];
+    areas.filter(item => isOn(item[0])).forEach(item => features.push(featureLine('areas', item[1], item[2])));
 
-          <div class="section">
-            <h3>Krajina a plochy</h3>
-            <div class="field">
-              <label><input id="forestOn" type="checkbox" checked /> Lesy</label>
-              <input id="forestFill" type="color" value="#9caf83" />
-            </div>
-            <div class="field">
-              <label><input id="meadowOn" type="checkbox" checked /> Louky</label>
-              <input id="meadowFill" type="color" value="#d8dba8" />
-            </div>
-            <div class="field">
-              <label><input id="sandOn" type="checkbox" checked /> Písek, pláže</label>
-              <input id="sandFill" type="color" value="#e7d4a2" />
-            </div>
-            <div class="field">
-              <label><input id="buildingOn" type="checkbox" checked /> Budovy</label>
-              <input id="buildingFill" type="color" value="#725d55" />
-            </div>
-            <div class="field">
-              <label for="areaOpacity" class="label-text">Krytí ploch</label>
-              <input id="areaOpacity" type="number" min="0" max="1" step="0.05" value="0.85" class="short" />
-            </div>
-          </div>
+    features.push('\tlines');
+    const lineFeatures = [
+      ['riverOn','water_lines','waterway=river OR waterway=stream OR waterway=canal'],
+      ['motorwayOn','motorway','highway=motorway OR highway=motorway_link'],
+      ['trunkOn','trunk_primary','highway=trunk OR highway=trunk_link OR highway=primary OR highway=primary_link'],
+      ['secondaryOn','secondary_tertiary','highway=secondary OR highway=secondary_link OR highway=tertiary OR highway=tertiary_link'],
+      ['localOn','local_roads','highway=residential OR highway=unclassified OR highway=service OR highway=living_street'],
+      ['pathOn','paths','highway=footway OR highway=path OR highway=track OR highway=cycleway OR highway=bridleway'],
+      ['railOn','railway','railway=rail OR railway=light_rail OR railway=tram'],
+      ['boundaryOn','boundaries','boundary=administrative']
+    ];
+    lineFeatures.filter(item => isOn(item[0])).forEach(item => features.push(featureLine('lines', item[1], item[2])));
 
-          <div class="section">
-            <h3>Cesty a železnice</h3>
-            <div class="field">
-              <label><input id="majorOn" type="checkbox" checked /> Hlavní silnice</label>
-              <input id="majorColor" type="color" value="#c96b45" />
-            </div>
-            <div class="field">
-              <label for="majorWidth" class="label-text">Výška hlavních silnic</label>
-              <input id="majorWidth" type="number" min="0.1" max="20" step="0.1" value="2.6" class="short" />
-            </div>
-            <div class="field">
-              <label><input id="minorOn" type="checkbox" checked /> Vedlejší silnice</label>
-              <input id="minorColor" type="color" value="#d8a477" />
-            </div>
-            <div class="field">
-              <label><input id="pathOn" type="checkbox" checked /> Cesty a stezky</label>
-              <input id="pathColor" type="color" value="#775a41" />
-            </div>
-            <div class="field">
-              <label for="pathWidth" class="label-text">Tloušťka cest</label>
-              <input id="pathWidth" type="number" min="0.1" max="10" step="0.1" value="0.8" class="short" />
-            </div>
-            <div class="field">
-              <label><input id="railOn" type="checkbox" checked /> Železnice</label>
-              <input id="railColor" type="color" value="#7b7f8a" />
-            </div>
-          </div>
+    features.push('\tpoints');
+    if (isOn('placeOn')) points.push(['places','place=city OR place=town OR place=village OR place=hamlet OR place=suburb']);
+    if (isOn('poiOn')) points.push(['tourism','tourism=*']);
+    if (isOn('peakOn')) points.push(['peaks','natural=peak']);
+    points.forEach(item => features.push(featureLine('points', item[0], item[1])));
 
-          <div class="section">
-            <h3>Popisky / text</h3>
-            <div class="field">
-              <label><input id="placeOn" type="checkbox" checked /> Názvy sídel</label>
-              <input id="placeColor" type="color" value="#302821" />
-            </div>
-            <div class="field">
-              <label for="fontName" class="label-text">Písmo</label>
-              <input id="fontName" type="text" value="DejaVu Sans" />
-            </div>
-            <div class="field">
-              <label for="fontSize" class="label-text">Velikost textu</label>
-              <input id="fontSize" type="number" min="6" max="80" step="1" value="14" class="short" />
-            </div>
-            <div class="field">
-              <label for="fontWeight" class="label-text">Tloušťka písma</label>
-              <select id="fontWeight">
-                <option value="normal">normální</option>
-                <option value="bold" selected>tučné</option>
-                <option value="italic">italic</option>
-              </select>
-            </div>
-            <div class="field">
-              <label for="labelOffset" class="label-text">Odsazení textu</label>
-              <input id="labelOffset" type="number" min="-20" max="20" step="1" value="3" class="short" />
-            </div>
-            <div class="field">
-              <label for="textHaloRadius" class="label-text">Ohraničení / halo</label>
-              <input id="textHaloRadius" type="number" min="0" max="12" step="0.5" value="2" class="short" />
-            </div>
-            <div class="field">
-              <label for="textHaloOpacity" class="label-text">Průhlednost halo</label>
-              <input id="textHaloOpacity" type="number" min="0" max="1" step="0.05" value="0.9" class="short" />
-            </div>
-            <div class="field">
-              <label for="textOpacity" class="label-text">Průhlednost textu</label>
-              <input id="textOpacity" type="number" min="0" max="1" step="0.05" value="1" class="short" />
-            </div>
-            <div class="field">
-              <label><input id="keepUpright" type="checkbox" checked /> Zachovat svislý text</label>
-            </div>
-            <div class="field">
-              <label><input id="followPath" type="checkbox" checked /> Text sleduje linii</label>
-            </div>
-          </div>
+    const extra = val('extraDefs').split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(line => line.replace(/^define\s+/i, ''));
+    const allAreaDefs = (colorId, withOutline=false) => {
+      const defs = ['fill-color : ' + val(colorId), 'fill-opacity : ' + number(colorId === 'waterColor' ? 'waterOpacity' : 'landOpacity')];
+      if (withOutline && Number(number('areaOutlineWidth')) > 0) {
+        defs.push('line-color : ' + val('areaOutline'), 'line-width : ' + number('areaOutlineWidth'));
+      }
+      return defs.concat(extra);
+    };
+    const areaStyles = [
+      ['waterOn','water','waterColor'], ['wetlandOn','wetland','wetlandColor'], ['forestOn','forest','forestColor'],
+      ['woodOn','scrub','woodColor'], ['farmlandOn','farmland','farmlandColor'], ['meadowOn','meadow','meadowColor'],
+      ['sandOn','sand','sandColor'], ['buildingOn','building','buildingColor']
+    ];
+    areaStyles.filter(item => isOn(item[0])).forEach(item => areaRules.push(rule(item[1], allAreaDefs(item[2], true), 'fill')));
 
-          <div class="section">
-            <h3>Pokročilé</h3>
-            <div class="field">
-              <label for="minZoom" class="label-text">Min. zoom</label>
-              <input id="minZoom" type="number" min="0" max="20" step="1" value="0" class="short" />
-            </div>
-            <div class="field">
-              <label for="maxZoom" class="label-text">Max. zoom</label>
-              <input id="maxZoom" type="number" min="0" max="22" step="1" value="22" class="short" />
-            </div>
-            <div class="field">
-              <label for="lineCap" class="label-text">Konec linie</label>
-              <select id="lineCap">
-                <option value="round" selected>round</option>
-                <option value="butt">butt</option>
-                <option value="square">square</option>
-              </select>
-            </div>
-          </div>
-        </aside>
+    const lineConfig = [
+      ['riverOn','water_lines','riverColor','riverWidth','solid','riverLabel'],
+      ['motorwayOn','motorway','motorwayColor','motorwayWidth','solid',null],
+      ['trunkOn','trunk_primary','trunkColor','trunkWidth','solid',null],
+      ['secondaryOn','secondary_tertiary','secondaryColor','secondaryWidth','solid',null],
+      ['localOn','local_roads','localColor','localWidth','solid',null],
+      ['pathOn','paths','pathColor','pathWidth',null,null],
+      ['railOn','railway','railColor','railWidth','dash',null],
+      ['boundaryOn','boundaries','boundaryColor','boundaryWidth','dash',null]
+    ];
+    lineConfig.filter(item => isOn(item[0])).forEach(item => {
+      const defs = ['line-color : ' + val(item[2]), 'line-width : ' + number(item[3]), 'line-opacity : ' + number('lineOpacity')];
+      const style = item[4] || val('pathStyle');
+      if (style !== 'solid') defs.push('line-style : ' + style);
+      defs.push(...extra);
+      lineRules.push(rule(item[1], defs, 'line'));
+    });
 
-        <main class="panel output-panel">
-          <div class="tabbar">
-            <button type="button" class="tab active" data-tab="generated">Vygenerované .mrules</button>
-            <button type="button" class="tab" data-tab="manual">Přímá editace textu</button>
-          </div>
+    if (isOn('roadLabels')) {
+      const defs = textDefs({tag: val('roadLabelTag'), color: val('roadLabelColor'), size: number('roadFontSize'), weight: val('roadFontWeight'), style: val('roadFontStyle'), font: val('defaultFont'), offsetH: number('roadOffsetH'), offsetV: number('roadOffsetV'), haloColor: val('roadHaloColor'), haloWidth: number('roadHaloWidth'), align: val('roadTextAlign')});
+      labelRules.push(rule('motorway', defs.concat(extra), 'text'));
+      labelRules.push(rule('trunk_primary', defs.concat(extra), 'text'));
+      labelRules.push(rule('secondary_tertiary', defs.concat(extra), 'text'));
+      labelRules.push(rule('local_roads', defs.concat(extra), 'text'));
+    }
+    if (isOn('riverOn') && val('riverLabel')) {
+      const defs = textDefs({tag: val('riverLabel'), color: val('riverColor'), size: '9', font: val('defaultFont'), offsetV: '2', haloColor: '#ffffff', haloWidth: '1'}).concat(extra);
+      labelRules.push(rule('water_lines', defs, 'text'));
+    }
 
-          <div class="tab-panel active" id="panel-generated">
-            <textarea id="output" spellcheck="false" aria-label="Výstup .mrules"></textarea>
-          </div>
+    if (isOn('placeOn')) {
+      const defs = textDefs({tag:'name', color:val('placeColor'), size:number('placeFontSize'), weight:val('placeFontWeight'), font:val('pointFont'), offsetV:'0', haloColor:val('pointHaloColor'), haloWidth:number('pointHaloWidth')}).concat(extra);
+      pointRules.push(rule('places', defs, 'text'));
+    }
+    if (isOn('poiOn')) {
+      const defs = textDefs({tag:'name', color:val('poiColor'), size:number('poiFontSize'), font:val('pointFont'), offsetV:number('pointOffsetV'), haloColor:val('pointHaloColor'), haloWidth:number('pointHaloWidth')}).concat(extra);
+      pointRules.push(rule('tourism', defs, 'text'));
+    }
+    if (isOn('peakOn')) {
+      const defs = textDefs({tag:'name', color:val('peakColor'), size:'10', font:val('pointFont'), offsetV:number('pointOffsetV'), haloColor:val('pointHaloColor'), haloWidth:number('pointHaloWidth')}).concat(extra);
+      pointRules.push(rule('peaks', defs, 'text'));
+    }
 
-          <div class="tab-panel" id="panel-manual">
-            <textarea id="manualText" spellcheck="false" aria-label="Přímá editace .mrules"></textarea>
-          </div>
+    const output = [
+      comment('Generated by Maperitive Rules Studio'),
+      comment('Style: ' + val('styleName')),
+      '', ...features, '',
+      'properties',
+      '\tmap-background-color : ' + val('background'),
+      '\tmap-sea-color : ' + val('sea'),
+      '\tfont-family : ' + safe(val('defaultFont')),
+      '', 'rules',
+      ...areaRules, ...lineRules, ...labelRules, ...pointRules
+    ].join('\n').replace(/\n{3,}/g, '\n\n').trim() + '\n';
+    $('rulesText').value = output;
+    editingManually = false;
+    $('editState').textContent = 'GUI a text jsou synchronizované';
+    $('editState').classList.remove('dirty');
+    state('Pravidla vygenerována.');
+  }
 
-          <div class="actions" style="margin-top: 12px; justify-content: flex-start;">
-            <button type="button" class="primary" id="generateFromGuiBtn">Generovat z GUI</button>
-            <button type="button" class="secondary" id="applyManualBtn">Použít upravený text</button>
-            <button type="button" class="secondary" id="copyBtn">Kopírovat</button>
-            <button type="button" class="warn" id="downloadBtn">Stáhnout .mrules</button>
-          </div>
-
-          <div id="status" class="status" aria-live="polite"></div>
-        </main>
-      </div>
-    </div>
-
-    <script>
-      (() => {
-        const root = document.getElementById('mrules-studio');
-        if (root.dataset.ready) return;
-        root.dataset.ready = '1';
-
-        const $ = (id) => root.querySelector('#' + id);
-        const v = (id) => $(id) ? $(id).value : '';
-        const checked = (id) => $(id) ? $(id).checked : false;
-        const num = (id, fallback = 0) => {
-          const val = parseFloat(v(id));
-          return Number.isFinite(val) ? val : fallback;
-        };
-
-        function createRule(target, defs, draw) {
-          return [
-            'target : ' + target,
-            ...defs.map((entry) => '\tdefine ' + entry),
-            '\tdraw : ' + draw,
-            ''
-          ].join('\n');
-        }
-
-        function escapeComment(value) {
-          return String(value || '').replace(/[\r\n]+/g, ' ');
-        }
-
-        function build() {
-          const styleName = escapeComment(v('styleName'));
-          const background = v('background');
-          const sea = v('sea');
-          const areaOpacity = num('areaOpacity', 0.85);
-          const riverOpacity = num('riverOpacity', 0.95);
-
-          const sections = [];
-          const rules = [];
-
-          sections.push('// Generated by Maperitive Rules Studio');
-          sections.push('// Style: ' + styleName);
-          sections.push('');
-          sections.push('features');
-          sections.push('\tareas');
-
-          if (checked('waterOn')) {
-            sections.push('\t\twater : natural=water OR waterway=riverbank OR landuse=reservoir');
-          }
-          if (checked('wetlandOn')) {
-            sections.push('\t\twetland : natural=wetland OR landuse=wetland');
-          }
-          if (checked('forestOn')) {
-            sections.push('\t\tforest : natural=wood OR landuse=forest');
-          }
-          if (checked('meadowOn')) {
-            sections.push('\t\tmeadow : landuse=meadow OR natural=grassland OR natural=scrub');
-          }
-          if (checked('sandOn')) {
-            sections.push('\t\tsand : natural=sand OR natural=beach');
-          }
-          if (checked('buildingOn')) {
-            sections.push('\t\tbuilding : building');
-          }
-
-          sections.push('\tlines');
-          if (checked('riverOn')) {
-            sections.push('\t\triver : waterway=river OR waterway=stream OR waterway=canal');
-          }
-          if (checked('majorOn')) {
-            sections.push('\t\tmajor_road : highway=motorway OR highway=trunk OR highway=primary OR highway=trunk_link');
-          }
-          if (checked('minorOn')) {
-            sections.push('\t\tminor_road : highway=secondary OR highway=tertiary OR highway=residential OR highway=unclassified');
-          }
-          if (checked('pathOn')) {
-            sections.push('\t\tpath : highway=footway OR highway=path OR highway=track OR highway=cycleway');
-          }
-          if (checked('railOn')) {
-            sections.push('\t\trailway : railway=rail');
-          }
-
-          sections.push('\tpoints');
-          if (checked('placeOn')) {
-            sections.push('\t\tplace : place=city OR place=town OR place=village OR place=hamlet OR place=suburb');
-          }
-          sections.push('');
-          sections.push('properties');
-          sections.push('\tmap-background-color : ' + background);
-          sections.push('\tmap-sea-color : ' + sea);
-          sections.push('\tfont-family : ' + v('fontName'));
-          sections.push('\tfont-size : ' + num('fontSize', 14));
-          sections.push('');
-          sections.push('rules');
-
-          // water
-          if (checked('waterOn')) {
-            rules.push(createRule('water', [
-              'fill-color : ' + v('waterFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-style : none'
-            ], 'fill'));
-          }
-
-          if (checked('wetlandOn')) {
-            rules.push(createRule('wetland', [
-              'fill-color : ' + v('wetlandFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-style : none'
-            ], 'fill'));
-          }
-
-          if (checked('forestOn')) {
-            rules.push(createRule('forest', [
-              'fill-color : ' + v('forestFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-style : none'
-            ], 'fill'));
-          }
-
-          if (checked('meadowOn')) {
-            rules.push(createRule('meadow', [
-              'fill-color : ' + v('meadowFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-style : none'
-            ], 'fill'));
-          }
-
-          if (checked('sandOn')) {
-            rules.push(createRule('sand', [
-              'fill-color : ' + v('sandFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-style : none'
-            ], 'fill'));
-          }
-
-          if (checked('buildingOn')) {
-            rules.push(createRule('building', [
-              'fill-color : ' + v('buildingFill'),
-              'fill-opacity : ' + areaOpacity,
-              'line-color : #ffffff',
-              'line-width : 0.2',
-              'line-cap : ' + v('lineCap')
-            ], 'fill'));
-          }
-
-          if (checked('riverOn')) {
-            rules.push(createRule('river', [
-              'line-color : ' + v('riverColor'),
-              'line-width : ' + num('riverWidth', 1.4),
-              'line-opacity : ' + riverOpacity,
-              'line-cap : ' + v('lineCap')
-            ], 'line'));
-          }
-
-          if (checked('majorOn')) {
-            rules.push(createRule('major_road', [
-              'line-color : ' + v('majorColor'),
-              'line-width : ' + num('majorWidth', 2.6),
-              'line-opacity : 0.95',
-              'line-cap : ' + v('lineCap')
-            ], 'line'));
-          }
-
-          if (checked('minorOn')) {
-            rules.push(createRule('minor_road', [
-              'line-color : ' + v('minorColor'),
-              'line-width : 1.2',
-              'line-opacity : 0.9',
-              'line-cap : ' + v('lineCap')
-            ], 'line'));
-          }
-
-          if (checked('pathOn')) {
-            rules.push(createRule('path', [
-              'line-color : ' + v('pathColor'),
-              'line-width : ' + num('pathWidth', 0.8),
-              'line-opacity : 0.85',
-              'line-style : dash',
-              'line-cap : ' + v('lineCap')
-            ], 'line'));
-          }
-
-          if (checked('railOn')) {
-            rules.push(createRule('railway', [
-              'line-color : ' + v('railColor'),
-              'line-width : 0.8',
-              'line-opacity : 0.85',
-              'line-style : dash',
-              'line-cap : ' + v('lineCap')
-            ], 'line'));
-          }
-
-          if (checked('placeOn')) {
-            rules.push(createRule('place', [
-              'text : name',
-              'font-family : ' + v('fontName'),
-              'font-size : ' + num('fontSize', 14),
-              'font-weight : ' + v('fontWeight'),
-              'text-color : ' + v('placeColor'),
-              'text-halo-color : #ffffff',
-              'text-halo-radius : ' + num('textHaloRadius', 2),
-              'text-halo-opacity : ' + num('textHaloOpacity', 0.9),
-              'text-opacity : ' + num('textOpacity', 1),
-              'text-offset : ' + num('labelOffset', 3),
-              'text-keep-upright : ' + (checked('keepUpright') ? 'true' : 'false'),
-              'text-follow-path : ' + (checked('followPath') ? 'true' : 'false'),
-              'text-align-horizontal : center',
-              'text-align-vertical : center'
-            ], 'text'));
-          }
-
-          const output = [...sections, ...rules].join('\n');
-          $('#output').value = output;
-          $('#manualText').value = output;
-          return output;
-        }
-
-        function applyManualText() {
-          const text = $('#manualText').value.trim();
-          if (!text) {
-            $('#status').textContent = 'Prázdný text nelze použít.';
-            return;
-          }
-          $('#output').value = text;
-          $('#status').textContent = 'Upravený text byl použit jako výsledný .mrules soubor.';
-        }
-
-        function copyText() {
-          const text = $('#output').value;
-          navigator.clipboard.writeText(text).then(() => {
-            $('#status').textContent = 'Text byl zkopírován do schránky.';
-          }).catch(() => {
-            $('#status').textContent = 'Zkopírování se nezdařilo — text můžete zkopírovat ručně.';
-          });
-        }
-
-        function downloadText() {
-          const text = $('#output').value;
-          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = 'map_style.mrules';
-          document.body.appendChild(link);
-          link.click();
-          link.remove();
-          URL.revokeObjectURL(url);
-          $('#status').textContent = 'Soubor .mrules byl stažen.';
-        }
-
-        function preset() {
-          const preset = {
-            background: '#efe6cf',
-            sea: '#a9cbd0',
-            waterFill: '#7fb7c2',
-            wetlandFill: '#9bc7c2',
-            riverColor: '#2f8190',
-            forestFill: '#889b6d',
-            meadowFill: '#d5cf9a',
-            sandFill: '#e7d4a2',
-            buildingFill: '#6c534a',
-            majorColor: '#ba5b36',
-            minorColor: '#d39b68',
-            pathColor: '#6d5345',
-            railColor: '#7b7f8a',
-            placeColor: '#302821',
-            fontName: 'DejaVu Sans',
-            fontSize: 14,
-            fontWeight: 'bold',
-            labelOffset: 3,
-            textHaloRadius: 2,
-            textHaloOpacity: 0.9,
-            textOpacity: 1,
-            areaOpacity: 0.85,
-            riverWidth: 1.4,
-            riverOpacity: 0.95,
-            majorWidth: 2.6,
-            pathWidth: 0.8,
-            minZoom: 0,
-            maxZoom: 22,
-            lineCap: 'round'
-          };
-
-          Object.entries(preset).forEach(([key, value]) => {
-            const input = $(key);
-            if (!input) return;
-            if (input.type === 'checkbox') {
-              input.checked = Boolean(value);
-            } else {
-              input.value = value;
-            }
-          });
-
-          ['waterOn', 'wetlandOn', 'riverOn', 'forestOn', 'meadowOn', 'sandOn', 'buildingOn', 'majorOn', 'minorOn', 'pathOn', 'railOn', 'placeOn', 'keepUpright', 'followPath'].forEach((id) => {
-            const el = $(id);
-            if (el) el.checked = true;
-          });
-
-          build();
-          $('#status').textContent = 'Předvolba byla aplikována.';
-        }
-
-        function setTab(tabName) {
-          document.querySelectorAll('.tab').forEach((tab) => {
-            tab.classList.toggle('active', tab.dataset.tab === tabName);
-          });
-          document.querySelectorAll('.tab-panel').forEach((panel) => {
-            panel.classList.toggle('active', panel.id === ('panel-' + tabName));
-          });
-        }
-
-        ['input', 'change'].forEach((eventName) => {
-          root.addEventListener(eventName, (e) => {
-            if (e.target && e.target.matches('input, select')) {
-              build();
-              $('#status').textContent = 'Generování aktualizováno.';
-            }
-          });
-        });
-
-        $('#generateBtn').addEventListener('click', () => {
-          build();
-          $('#status').textContent = '.mrules byl vygenerován.';
-        });
-
-        $('#generateFromGuiBtn').addEventListener('click', () => {
-          build();
-          $('#status').textContent = 'Výstup z GUI byl aktualizován.';
-        });
-
-        $('#applyManualBtn').addEventListener('click', applyManualText);
-        $('#copyBtn').addEventListener('click', copyText);
-        $('#downloadBtn').addEventListener('click', downloadText);
-        $('#presetBtn').addEventListener('click', preset);
-
-        document.querySelectorAll('.tab').forEach((tab) => {
-          tab.addEventListener('click', () => setTab(tab.dataset.tab));
-        });
-
-        build();
-      })();
-    </script>
-  </body>
+  // Changes in controls update the document only while GUI mode is active; manual edits are preserved.
+  root.addEventListener('input', event => {
+    if (!event.target || event.target.id === 'rulesText') return;
+    if (!editingManually) build();
+  });
+  root.addEventListener('change', event => {
+    if (!event.target || event.target.id === 'rulesText') return;
+    if (!editingManually) build();
+  });
+  $('rulesText').addEventListener('input', () => {
+    editingManually = true;
+    $('editState').textContent = 'Text upraven ručně — změny GUI jej nepřepíší';
+    $('editState').classList.add('dirty');
+    state('Ruční úpravy jsou zachovány. Stáhnout lze přímo tuto verzi textu.');
+  });
+  $('rebuild').addEventListener('click', build);
+  $('download').addEventListener('click', () => {
+    const blob = new Blob([$('rulesText').value], {type:'text/plain;charset=utf-8'});
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a'); link.href = url; link.download = safe(val('styleName')).replace(/[^\p{L}\p{N}_-]+/gu,'_') + '.mrules';
+    document.body.appendChild(link); link.click(); link.remove(); URL.revokeObjectURL(url); state('Soubor .mrules stažen z aktuálního textu editoru.');
+  });
+  $('copy').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText($('rulesText').value); state('Text pravidel zkopírován.'); }
+    catch (_) { $('rulesText').focus(); $('rulesText').select(); state('Schránka není dostupná; text je označen, zkopírujte jej ručně.'); }
+  });
+  $('loadFile').addEventListener('click', () => $('fileInput').click());
+  $('fileInput').addEventListener('change', async event => {
+    const file = event.target.files && event.target.files[0]; if (!file) return;
+    $('rulesText').value = await file.text(); editingManually = true;
+    $('editState').textContent = 'Načtený soubor upravujete jako text'; $('editState').classList.add('dirty');
+    state('Soubor načten. Obsah zůstává beze změny; stáhněte jej po úpravách.'); event.target.value = '';
+  });
+  $('preset').addEventListener('click', () => {
+    const values = {background:'#efe6cf',sea:'#a9cbd0',waterColor:'#7fb7c2',wetlandColor:'#9bc7c2',forestColor:'#889b6d',woodColor:'#b5c29a',farmlandColor:'#e4d9a8',meadowColor:'#d5cf96',sandColor:'#e7d4a2',buildingColor:'#6c534a',riverColor:'#2f8190',motorwayColor:'#b44f3d',trunkColor:'#ba5b36',secondaryColor:'#d39b6a',localColor:'#ead3ad',pathColor:'#6d5345',railColor:'#7b7f8a',boundaryColor:'#9c6a9c',placeColor:'#302821',poiColor:'#7c3aed',peakColor:'#4b5563'};
+    Object.entries(values).forEach(([id,value]) => $(id).value = value);
+    build(); state('Barevná předvolba načtena.');
+  });
+  build();
+})();
+</script>
+</body>
 </html>
