@@ -1,48 +1,795 @@
 <html>
-<body>
-<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-<script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/us-atlas@3/states-10m.json"></script>
-<div id="mrules-studio" class="w-full rounded-2xl border border-slate-300 bg-slate-50 p-4 text-slate-900 shadow-sm dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100">
-<style>
-#mrules-studio *{box-sizing:border-box}#mrules-studio .grid-main{display:grid;grid-template-columns:minmax(260px,360px) minmax(0,1fr);gap:16px}#mrules-studio .panel{border:1px solid #cbd5e1;border-radius:14px;background:#fff;padding:14px}#mrules-studio .row{display:grid;grid-template-columns:1fr auto;align-items:center;gap:10px;margin:9px 0}#mrules-studio label{font-size:14px}#mrules-studio input[type=color]{width:44px;height:34px;border:0;background:transparent;padding:0}#mrules-studio input[type=number],#mrules-studio input[type=text],#mrules-studio select{width:100%;border:1px solid #94a3b8;border-radius:8px;padding:7px 9px;background:#fff;color:#0f172a}#mrules-studio textarea{width:100%;min-height:520px;resize:vertical;border:1px solid #94a3b8;border-radius:10px;padding:12px;background:#0f172a;color:#dbeafe;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre}#mrules-studio button{border-radius:9px;padding:8px 12px;font-weight:650;cursor:pointer}#mrules-studio .primary{background:#2563eb;color:#fff;border:1px solid #1d4ed8}#mrules-studio .secondary{background:#fff;color:#0f172a;border:1px solid #94a3b8}#mrules-studio button:focus,#mrules-studio input:focus,#mrules-studio select:focus,#mrules-studio textarea:focus{outline:3px solid #93c5fd;outline-offset:2px}#mrules-studio .category{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:10px}#mrules-studio .category:first-of-type{border-top:0;margin-top:0}#mrules-studio .head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px}#mrules-studio .actions{display:flex;gap:8px;flex-wrap:wrap}#mrules-studio .small{font-size:12px;color:#64748b}#mrules-studio h2{font-size:20px;font-weight:750;margin:0}#mrules-studio h3{font-size:15px;font-weight:700;margin:0 0 8px}#mrules-studio .status{min-height:20px;font-size:13px;color:#166534;margin-top:7px}@media(max-width:760px){#mrules-studio .grid-main{grid-template-columns:1fr}#mrules-studio textarea{min-height:400px}}@media(prefers-color-scheme:dark){#mrules-studio .panel{background:#111827;border-color:#475569}#mrules-studio input[type=number],#mrules-studio input[type=text],#mrules-studio select{background:#0f172a;color:#f8fafc;border-color:#64748b}#mrules-studio .secondary{background:#1e293b;color:#f8fafc;border-color:#64748b}#mrules-studio .small{color:#94a3b8}#mrules-studio .category{border-color:#334155}#mrules-studio .status{color:#86efac}}
-</style>
-<div class="head"><div><h2>Maperitive Rules Studio</h2><div class="small">Uk·zkov˝ vizu·lnÌ gener·tor z·kladnÌch pravidel .mrules</div></div><div class="actions"><button type="button" class="secondary" id="presetBtn">V˝tvarn˝ preset</button><button type="button" class="primary" id="copyBtn">KopÌrovat pravidla</button></div></div>
-<div class="grid-main">
-<section class="panel" aria-label="NastavenÌ stylu">
-<h3>ObecnÈ</h3>
-<div class="row"><label for="styleName">N·zev stylu</label><input id="styleName" type="text" value="Krumlov Art Map"></div>
-<div class="row"><label for="background">PozadÌ mapy</label><input id="background" type="color" value="#f4eedf"></div>
-<div class="row"><label for="sea">Barva vody v pozadÌ</label><input id="sea" type="color" value="#b9d9df"></div>
-<div class="category"><h3>Vodstvo</h3>
-<div class="row"><label><input id="waterOn" type="checkbox" checked> Zobrazit plochy vody</label><input id="waterFill" type="color" value="#8fcbd4"></div>
-<div class="row"><label><input id="riverOn" type="checkbox" checked> Zobrazit ¯eky a potoky</label><input id="riverColor" type="color" value="#3c91a3"></div>
-<div class="row"><label for="riverWidth">Tlouöùka vodnÌch tok˘</label><input id="riverWidth" type="number" min="0.1" max="20" step="0.1" value="1.4"></div></div>
-<div class="category"><h3>Krajina</h3>
-<div class="row"><label><input id="forestOn" type="checkbox" checked> Lesy</label><input id="forestFill" type="color" value="#9caf83"></div>
-<div class="row"><label><input id="meadowOn" type="checkbox" checked> Louky</label><input id="meadowFill" type="color" value="#d8dba8"></div>
-<div class="row"><label for="areaOpacity">KrytÌ ploch</label><input id="areaOpacity" type="number" min="0" max="1" step="0.05" value="0.85"></div></div>
-<div class="category"><h3>Cesty</h3>
-<div class="row"><label><input id="majorOn" type="checkbox" checked> HlavnÌ silnice</label><input id="majorColor" type="color" value="#c96b45"></div>
-<div class="row"><label for="majorWidth">Tlouöùka hlavnÌch silnic</label><input id="majorWidth" type="number" min="0.1" max="20" step="0.1" value="2.6"></div>
-<div class="row"><label><input id="minorOn" type="checkbox" checked> VedlejöÌ silnice</label><input id="minorColor" type="color" value="#d8a477"></div>
-<div class="row"><label><input id="pathOn" type="checkbox" checked> PÏöiny a stezky</label><input id="pathColor" type="color" value="#775a41"></div>
-<div class="row"><label for="pathWidth">Tlouöùka pÏöin</label><input id="pathWidth" type="number" min="0.1" max="10" step="0.1" value="0.8"></div></div>
-<div class="category"><h3>Budovy a n·zvy</h3>
-<div class="row"><label><input id="buildingOn" type="checkbox" checked> Budovy</label><input id="buildingFill" type="color" value="#725d55"></div>
-<div class="row"><label><input id="placeOn" type="checkbox" checked> N·zvy sÌdel</label><input id="textColor" type="color" value="#302821"></div>
-<div class="row"><label for="fontName">PÌsmo</label><input id="fontName" type="text" value="DejaVu Sans"></div>
-<div class="row"><label for="fontSize">Velikost pÌsma</label><input id="fontSize" type="number" min="6" max="80" step="1" value="14"></div></div>
-</section>
-<section class="panel" aria-label="Vygenerovan· pravidla"><h3>V˝stup .mrules</h3><textarea id="output" spellcheck="false" aria-label="Vygenerovan˝ soubor Maperitive rules"></textarea><div id="status" class="status" aria-live="polite"></div><p class="small">Uloû jako textov˝ soubor s p¯Ìponou <strong>.mrules</strong>. Prototyp generuje p¯ehledn˝ z·klad, kter˝ lze d·le ruËnÏ rozöi¯ovat.</p></section>
-</div>
-<script>
-(()=>{const root=document.getElementById('mrules-studio');if(root.dataset.ready)return;root.dataset.ready='1';const $=id=>root.querySelector('#'+id);const val=id=>$(id).value;const on=id=>$(id).checked;const n=id=>{const x=parseFloat(val(id));return Number.isFinite(x)?x:0};
-function rule(target,defs,draw){return ['target : '+target,...defs.map(x=>'\tdefine '+x),'\tdraw : '+draw,''].join('\n')}
-function build(){let features=['// Generated by Maperitive Rules Studio','// Style: '+val('styleName').replace(/[\r\n]/g,' '),'','features','\tareas','\t\twater : natural=water OR waterway=riverbank OR landuse=reservoir OR landuse=basin','\t\tforest : natural=wood OR landuse=forest','\t\tmeadow : landuse=meadow OR landuse=grass OR natural=grassland','\t\tbuilding : building','\tlines','\t\triver : waterway=river OR waterway=stream','\t\troad major : highway=motorway OR highway=trunk OR highway=primary OR highway=secondary','\t\troad minor : highway=tertiary OR highway=residential OR highway=unclassified OR highway=service','\t\tpath : highway=footway OR highway=path OR highway=track OR highway=cycleway','\tpoints','\t\tplace : place=city OR place=town OR place=village OR place=hamlet','','properties','\tmap-background-color : '+val('background'),'\tmap-sea-color : '+val('sea'),'','rules',''];let rules=[];if(on('waterOn'))rules.push(rule('water',['fill-color : '+val('waterFill'),'line-style : none'],'fill'));if(on('forestOn'))rules.push(rule('forest',['fill-color : '+val('forestFill'),'fill-opacity : '+n('areaOpacity'),'line-style : none'],'fill'));if(on('meadowOn'))rules.push(rule('meadow',['fill-color : '+val('meadowFill'),'fill-opacity : '+n('areaOpacity'),'line-style : none'],'fill'));if(on('riverOn'))rules.push(rule('river',['line-color : '+val('riverColor'),'line-width : '+n('riverWidth'),'line-end-cap : round'],'line'));if(on('minorOn'))rules.push(rule('road minor',['line-color : '+val('minorColor'),'line-width : 1.2','line-end-cap : round'],'line'));if(on('majorOn'))rules.push(rule('road major',['line-color : '+val('majorColor'),'line-width : '+n('majorWidth'),'line-end-cap : round'],'line'));if(on('pathOn'))rules.push(rule('path',['line-color : '+val('pathColor'),'line-width : '+n('pathWidth'),'line-style : dash','line-end-cap : round'],'line'));if(on('buildingOn'))rules.push(rule('building',['fill-color : '+val('buildingFill'),'line-color : #ffffff','line-width : 0.2'],'fill'));if(on('placeOn'))rules.push(rule('place',['font-family : '+val('fontName').replace(/[\r\n:]/g,' '),'font-size : '+n('fontSize'),'font-weight : bold','text-color : '+val('textColor'),'text-halo-color : #ffffff','text-halo-width : 25%','text : name'],'text'));$('output').value=features.join('\n')+rules.join('\n')}
-root.addEventListener('input',build);$('presetBtn').addEventListener('click',()=>{const p={background:'#efe6cf',sea:'#a9cbd0',waterFill:'#7fb7c2',riverColor:'#2f8190',forestFill:'#889b6d',meadowFill:'#d5cf96',majorColor:'#b95538',minorColor:'#d39b6a',pathColor:'#604b38',buildingFill:'#5f504b',textColor:'#29221d'};Object.entries(p).forEach(([k,v])=>$(k).value=v);$('areaOpacity').value='0.78';$('status').textContent='Pouûit v˝tvarn˝ preset.';build()});$('copyBtn').addEventListener('click',async()=>{try{await navigator.clipboard.writeText($('output').value);$('status').textContent='Pravidla byla zkopÌrov·na do schr·nky.'}catch(e){$('output').select();document.execCommand('copy');$('status').textContent='Pravidla byla oznaËena a zkopÌrov·na.'}});build()})();
-</script>
-</div>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <title>Maperitive Rules Studio</title>
+    <style>
+      :root {
+        --bg: #f8fafc;
+        --panel: #ffffff;
+        --border: #cbd5e1;
+        --muted: #64748b;
+        --text: #0f172a;
+        --accent: #2563eb;
+        --accent-soft: #dbeafe;
+        --success: #166534;
+        --warning: #9a5b00;
+        --shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        --radius: 16px;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background: linear-gradient(180deg, #eef4ff 0%, #f8fafc 100%);
+        color: var(--text);
+      }
+
+      #mrules-studio {
+        max-width: 1500px;
+        margin: 24px auto;
+        background: rgba(255,255,255,0.7);
+        border: 1px solid rgba(148,163,184,0.35);
+        border-radius: 24px;
+        box-shadow: var(--shadow);
+        padding: 18px;
+      }
+
+      .topbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 16px;
+        padding: 6px 6px 18px;
+      }
+
+      .title-wrap h1 {
+        margin: 0;
+        font-size: clamp(1.7rem, 2.5vw, 2.4rem);
+        line-height: 1.1;
+      }
+
+      .title-wrap small {
+        color: var(--muted);
+        display: block;
+        margin-top: 8px;
+      }
+
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      button {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        border-radius: 10px;
+        padding: 9px 14px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.15s ease;
+      }
+
+      button:hover { transform: translateY(-1px); }
+
+      button.primary {
+        background: linear-gradient(180deg, #1d4ed8, #1e40af);
+        border-color: #1e40af;
+        color: #fff;
+      }
+
+      button.secondary {
+        background: #f8fafc;
+      }
+
+      button.warn {
+        background: #fff7ed;
+        border-color: #fdba74;
+        color: #9a5b00;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(300px, 420px) minmax(0, 1fr);
+        gap: 18px;
+      }
+
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--panel);
+        min-height: 200px;
+      }
+
+      .settings {
+        padding: 18px 16px 12px;
+      }
+
+      .section {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 12px 12px 10px;
+        margin-bottom: 14px;
+      }
+
+      .section h3 {
+        margin: 0 0 10px;
+        font-size: 1rem;
+      }
+
+      .field {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+
+      .field label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+        font-size: 0.93rem;
+      }
+
+      .field .label-text {
+        flex: 1;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--border);
+        background: #fff;
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font: inherit;
+      }
+
+      input[type="color"] {
+        width: 52px;
+        height: 36px;
+        padding: 2px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: white;
+      }
+
+      input[type="checkbox"] {
+        accent-color: var(--accent);
+        width: 16px;
+        height: 16px;
+      }
+
+      .short {
+        width: 90px;
+      }
+
+      .compact {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .output-panel {
+        padding: 14px;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .tabbar {
+        display: flex;
+        gap: 8px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 12px;
+      }
+
+      .tab {
+        background: transparent;
+        border: 0;
+        border-radius: 10px 10px 0 0;
+        padding: 10px 12px 12px;
+        color: var(--muted);
+        border-bottom: 2px solid transparent;
+      }
+
+      .tab.active {
+        color: var(--text);
+        border-color: var(--accent);
+        background: var(--accent-soft);
+      }
+
+      .tab-panel {
+        display: none;
+        flex: 1;
+      }
+
+      .tab-panel.active {
+        display: flex;
+        flex-direction: column;
+      }
+
+      textarea {
+        flex: 1;
+        min-height: 620px;
+        resize: vertical;
+        font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+
+      .status {
+        min-height: 24px;
+        margin-top: 12px;
+        color: var(--success);
+        font-size: 0.9rem;
+        font-weight: 600;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        textarea { min-height: 420px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="mrules-studio">
+      <div class="topbar">
+        <div class="title-wrap">
+          <h1>Maperitive Rules Studio</h1>
+          <small>Vizu√°ln√≠ gener√°tor a editace .mrules s podporou p≈ô√≠m√© √∫pravy textu</small>
+        </div>
+        <div class="actions">
+          <button type="button" class="secondary" id="presetBtn">Nastavit p≈ôedvolbu</button>
+          <button type="button" class="primary" id="generateBtn">Generovat .mrules</button>
+        </div>
+      </div>
+
+      <div class="layout">
+        <aside class="panel settings">
+          <div class="section">
+            <h3>Obecn√©</h3>
+            <div class="field">
+              <label for="styleName" class="label-text">N√°zev stylu</label>
+              <input id="styleName" type="text" value="Krumlov Art Map" />
+            </div>
+            <div class="field">
+              <label for="background" class="label-text">Pozad√≠ mapy</label>
+              <input id="background" type="color" value="#f4eedf" />
+            </div>
+            <div class="field">
+              <label for="sea" class="label-text">Barva mo≈ôe / vodn√≠ho pozad√≠</label>
+              <input id="sea" type="color" value="#b9d9df" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Vodstvo</h3>
+            <div class="field">
+              <label><input id="waterOn" type="checkbox" checked /> Zobrazit plochy vody</label>
+              <input id="waterFill" type="color" value="#8fcbd4" />
+            </div>
+            <div class="field">
+              <label><input id="wetlandOn" type="checkbox" checked /> Mok≈ôady</label>
+              <input id="wetlandFill" type="color" value="#9bc7c2" />
+            </div>
+            <div class="field">
+              <label><input id="riverOn" type="checkbox" checked /> ≈òeky a potoky</label>
+              <input id="riverColor" type="color" value="#3c91a3" />
+            </div>
+            <div class="field">
+              <label for="riverWidth" class="label-text">Tlou≈°≈•ka ≈ôek</label>
+              <input id="riverWidth" type="number" min="0.1" max="15" step="0.1" value="1.4" class="short" />
+            </div>
+            <div class="field">
+              <label for="riverOpacity" class="label-text">Pr≈Øhlednost ≈ôek</label>
+              <input id="riverOpacity" type="number" min="0" max="1" step="0.05" value="0.95" class="short" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Krajina a plochy</h3>
+            <div class="field">
+              <label><input id="forestOn" type="checkbox" checked /> Lesy</label>
+              <input id="forestFill" type="color" value="#9caf83" />
+            </div>
+            <div class="field">
+              <label><input id="meadowOn" type="checkbox" checked /> Louky</label>
+              <input id="meadowFill" type="color" value="#d8dba8" />
+            </div>
+            <div class="field">
+              <label><input id="sandOn" type="checkbox" checked /> P√≠sek, pl√°≈æe</label>
+              <input id="sandFill" type="color" value="#e7d4a2" />
+            </div>
+            <div class="field">
+              <label><input id="buildingOn" type="checkbox" checked /> Budovy</label>
+              <input id="buildingFill" type="color" value="#725d55" />
+            </div>
+            <div class="field">
+              <label for="areaOpacity" class="label-text">Kryt√≠ ploch</label>
+              <input id="areaOpacity" type="number" min="0" max="1" step="0.05" value="0.85" class="short" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Cesty a ≈æeleznice</h3>
+            <div class="field">
+              <label><input id="majorOn" type="checkbox" checked /> Hlavn√≠ silnice</label>
+              <input id="majorColor" type="color" value="#c96b45" />
+            </div>
+            <div class="field">
+              <label for="majorWidth" class="label-text">V√Ω≈°ka hlavn√≠ch silnic</label>
+              <input id="majorWidth" type="number" min="0.1" max="20" step="0.1" value="2.6" class="short" />
+            </div>
+            <div class="field">
+              <label><input id="minorOn" type="checkbox" checked /> Vedlej≈°√≠ silnice</label>
+              <input id="minorColor" type="color" value="#d8a477" />
+            </div>
+            <div class="field">
+              <label><input id="pathOn" type="checkbox" checked /> Cesty a stezky</label>
+              <input id="pathColor" type="color" value="#775a41" />
+            </div>
+            <div class="field">
+              <label for="pathWidth" class="label-text">Tlou≈°≈•ka cest</label>
+              <input id="pathWidth" type="number" min="0.1" max="10" step="0.1" value="0.8" class="short" />
+            </div>
+            <div class="field">
+              <label><input id="railOn" type="checkbox" checked /> ≈Ωeleznice</label>
+              <input id="railColor" type="color" value="#7b7f8a" />
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Popisky / text</h3>
+            <div class="field">
+              <label><input id="placeOn" type="checkbox" checked /> N√°zvy s√≠del</label>
+              <input id="placeColor" type="color" value="#302821" />
+            </div>
+            <div class="field">
+              <label for="fontName" class="label-text">P√≠smo</label>
+              <input id="fontName" type="text" value="DejaVu Sans" />
+            </div>
+            <div class="field">
+              <label for="fontSize" class="label-text">Velikost textu</label>
+              <input id="fontSize" type="number" min="6" max="80" step="1" value="14" class="short" />
+            </div>
+            <div class="field">
+              <label for="fontWeight" class="label-text">Tlou≈°≈•ka p√≠sma</label>
+              <select id="fontWeight">
+                <option value="normal">norm√°ln√≠</option>
+                <option value="bold" selected>tuƒçn√©</option>
+                <option value="italic">italic</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="labelOffset" class="label-text">Odsazen√≠ textu</label>
+              <input id="labelOffset" type="number" min="-20" max="20" step="1" value="3" class="short" />
+            </div>
+            <div class="field">
+              <label for="textHaloRadius" class="label-text">Ohraniƒçen√≠ / halo</label>
+              <input id="textHaloRadius" type="number" min="0" max="12" step="0.5" value="2" class="short" />
+            </div>
+            <div class="field">
+              <label for="textHaloOpacity" class="label-text">Pr≈Øhlednost halo</label>
+              <input id="textHaloOpacity" type="number" min="0" max="1" step="0.05" value="0.9" class="short" />
+            </div>
+            <div class="field">
+              <label for="textOpacity" class="label-text">Pr≈Øhlednost textu</label>
+              <input id="textOpacity" type="number" min="0" max="1" step="0.05" value="1" class="short" />
+            </div>
+            <div class="field">
+              <label><input id="keepUpright" type="checkbox" checked /> Zachovat svisl√Ω text</label>
+            </div>
+            <div class="field">
+              <label><input id="followPath" type="checkbox" checked /> Text sleduje linii</label>
+            </div>
+          </div>
+
+          <div class="section">
+            <h3>Pokroƒçil√©</h3>
+            <div class="field">
+              <label for="minZoom" class="label-text">Min. zoom</label>
+              <input id="minZoom" type="number" min="0" max="20" step="1" value="0" class="short" />
+            </div>
+            <div class="field">
+              <label for="maxZoom" class="label-text">Max. zoom</label>
+              <input id="maxZoom" type="number" min="0" max="22" step="1" value="22" class="short" />
+            </div>
+            <div class="field">
+              <label for="lineCap" class="label-text">Konec linie</label>
+              <select id="lineCap">
+                <option value="round" selected>round</option>
+                <option value="butt">butt</option>
+                <option value="square">square</option>
+              </select>
+            </div>
+          </div>
+        </aside>
+
+        <main class="panel output-panel">
+          <div class="tabbar">
+            <button type="button" class="tab active" data-tab="generated">Vygenerovan√© .mrules</button>
+            <button type="button" class="tab" data-tab="manual">P≈ô√≠m√° editace textu</button>
+          </div>
+
+          <div class="tab-panel active" id="panel-generated">
+            <textarea id="output" spellcheck="false" aria-label="V√Ωstup .mrules"></textarea>
+          </div>
+
+          <div class="tab-panel" id="panel-manual">
+            <textarea id="manualText" spellcheck="false" aria-label="P≈ô√≠m√° editace .mrules"></textarea>
+          </div>
+
+          <div class="actions" style="margin-top: 12px; justify-content: flex-start;">
+            <button type="button" class="primary" id="generateFromGuiBtn">Generovat z GUI</button>
+            <button type="button" class="secondary" id="applyManualBtn">Pou≈æ√≠t upraven√Ω text</button>
+            <button type="button" class="secondary" id="copyBtn">Kop√≠rovat</button>
+            <button type="button" class="warn" id="downloadBtn">St√°hnout .mrules</button>
+          </div>
+
+          <div id="status" class="status" aria-live="polite"></div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      (() => {
+        const root = document.getElementById('mrules-studio');
+        if (root.dataset.ready) return;
+        root.dataset.ready = '1';
+
+        const $ = (id) => root.querySelector('#' + id);
+        const v = (id) => $(id) ? $(id).value : '';
+        const checked = (id) => $(id) ? $(id).checked : false;
+        const num = (id, fallback = 0) => {
+          const val = parseFloat(v(id));
+          return Number.isFinite(val) ? val : fallback;
+        };
+
+        function createRule(target, defs, draw) {
+          return [
+            'target : ' + target,
+            ...defs.map((entry) => '\tdefine ' + entry),
+            '\tdraw : ' + draw,
+            ''
+          ].join('\n');
+        }
+
+        function escapeComment(value) {
+          return String(value || '').replace(/[\r\n]+/g, ' ');
+        }
+
+        function build() {
+          const styleName = escapeComment(v('styleName'));
+          const background = v('background');
+          const sea = v('sea');
+          const areaOpacity = num('areaOpacity', 0.85);
+          const riverOpacity = num('riverOpacity', 0.95);
+
+          const sections = [];
+          const rules = [];
+
+          sections.push('// Generated by Maperitive Rules Studio');
+          sections.push('// Style: ' + styleName);
+          sections.push('');
+          sections.push('features');
+          sections.push('\tareas');
+
+          if (checked('waterOn')) {
+            sections.push('\t\twater : natural=water OR waterway=riverbank OR landuse=reservoir');
+          }
+          if (checked('wetlandOn')) {
+            sections.push('\t\twetland : natural=wetland OR landuse=wetland');
+          }
+          if (checked('forestOn')) {
+            sections.push('\t\tforest : natural=wood OR landuse=forest');
+          }
+          if (checked('meadowOn')) {
+            sections.push('\t\tmeadow : landuse=meadow OR natural=grassland OR natural=scrub');
+          }
+          if (checked('sandOn')) {
+            sections.push('\t\tsand : natural=sand OR natural=beach');
+          }
+          if (checked('buildingOn')) {
+            sections.push('\t\tbuilding : building');
+          }
+
+          sections.push('\tlines');
+          if (checked('riverOn')) {
+            sections.push('\t\triver : waterway=river OR waterway=stream OR waterway=canal');
+          }
+          if (checked('majorOn')) {
+            sections.push('\t\tmajor_road : highway=motorway OR highway=trunk OR highway=primary OR highway=trunk_link');
+          }
+          if (checked('minorOn')) {
+            sections.push('\t\tminor_road : highway=secondary OR highway=tertiary OR highway=residential OR highway=unclassified');
+          }
+          if (checked('pathOn')) {
+            sections.push('\t\tpath : highway=footway OR highway=path OR highway=track OR highway=cycleway');
+          }
+          if (checked('railOn')) {
+            sections.push('\t\trailway : railway=rail');
+          }
+
+          sections.push('\tpoints');
+          if (checked('placeOn')) {
+            sections.push('\t\tplace : place=city OR place=town OR place=village OR place=hamlet OR place=suburb');
+          }
+          sections.push('');
+          sections.push('properties');
+          sections.push('\tmap-background-color : ' + background);
+          sections.push('\tmap-sea-color : ' + sea);
+          sections.push('\tfont-family : ' + v('fontName'));
+          sections.push('\tfont-size : ' + num('fontSize', 14));
+          sections.push('');
+          sections.push('rules');
+
+          // water
+          if (checked('waterOn')) {
+            rules.push(createRule('water', [
+              'fill-color : ' + v('waterFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-style : none'
+            ], 'fill'));
+          }
+
+          if (checked('wetlandOn')) {
+            rules.push(createRule('wetland', [
+              'fill-color : ' + v('wetlandFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-style : none'
+            ], 'fill'));
+          }
+
+          if (checked('forestOn')) {
+            rules.push(createRule('forest', [
+              'fill-color : ' + v('forestFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-style : none'
+            ], 'fill'));
+          }
+
+          if (checked('meadowOn')) {
+            rules.push(createRule('meadow', [
+              'fill-color : ' + v('meadowFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-style : none'
+            ], 'fill'));
+          }
+
+          if (checked('sandOn')) {
+            rules.push(createRule('sand', [
+              'fill-color : ' + v('sandFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-style : none'
+            ], 'fill'));
+          }
+
+          if (checked('buildingOn')) {
+            rules.push(createRule('building', [
+              'fill-color : ' + v('buildingFill'),
+              'fill-opacity : ' + areaOpacity,
+              'line-color : #ffffff',
+              'line-width : 0.2',
+              'line-cap : ' + v('lineCap')
+            ], 'fill'));
+          }
+
+          if (checked('riverOn')) {
+            rules.push(createRule('river', [
+              'line-color : ' + v('riverColor'),
+              'line-width : ' + num('riverWidth', 1.4),
+              'line-opacity : ' + riverOpacity,
+              'line-cap : ' + v('lineCap')
+            ], 'line'));
+          }
+
+          if (checked('majorOn')) {
+            rules.push(createRule('major_road', [
+              'line-color : ' + v('majorColor'),
+              'line-width : ' + num('majorWidth', 2.6),
+              'line-opacity : 0.95',
+              'line-cap : ' + v('lineCap')
+            ], 'line'));
+          }
+
+          if (checked('minorOn')) {
+            rules.push(createRule('minor_road', [
+              'line-color : ' + v('minorColor'),
+              'line-width : 1.2',
+              'line-opacity : 0.9',
+              'line-cap : ' + v('lineCap')
+            ], 'line'));
+          }
+
+          if (checked('pathOn')) {
+            rules.push(createRule('path', [
+              'line-color : ' + v('pathColor'),
+              'line-width : ' + num('pathWidth', 0.8),
+              'line-opacity : 0.85',
+              'line-style : dash',
+              'line-cap : ' + v('lineCap')
+            ], 'line'));
+          }
+
+          if (checked('railOn')) {
+            rules.push(createRule('railway', [
+              'line-color : ' + v('railColor'),
+              'line-width : 0.8',
+              'line-opacity : 0.85',
+              'line-style : dash',
+              'line-cap : ' + v('lineCap')
+            ], 'line'));
+          }
+
+          if (checked('placeOn')) {
+            rules.push(createRule('place', [
+              'text : name',
+              'font-family : ' + v('fontName'),
+              'font-size : ' + num('fontSize', 14),
+              'font-weight : ' + v('fontWeight'),
+              'text-color : ' + v('placeColor'),
+              'text-halo-color : #ffffff',
+              'text-halo-radius : ' + num('textHaloRadius', 2),
+              'text-halo-opacity : ' + num('textHaloOpacity', 0.9),
+              'text-opacity : ' + num('textOpacity', 1),
+              'text-offset : ' + num('labelOffset', 3),
+              'text-keep-upright : ' + (checked('keepUpright') ? 'true' : 'false'),
+              'text-follow-path : ' + (checked('followPath') ? 'true' : 'false'),
+              'text-align-horizontal : center',
+              'text-align-vertical : center'
+            ], 'text'));
+          }
+
+          const output = [...sections, ...rules].join('\n');
+          $('#output').value = output;
+          $('#manualText').value = output;
+          return output;
+        }
+
+        function applyManualText() {
+          const text = $('#manualText').value.trim();
+          if (!text) {
+            $('#status').textContent = 'Pr√°zdn√Ω text nelze pou≈æ√≠t.';
+            return;
+          }
+          $('#output').value = text;
+          $('#status').textContent = 'Upraven√Ω text byl pou≈æit jako v√Ωsledn√Ω .mrules soubor.';
+        }
+
+        function copyText() {
+          const text = $('#output').value;
+          navigator.clipboard.writeText(text).then(() => {
+            $('#status').textContent = 'Text byl zkop√≠rov√°n do schr√°nky.';
+          }).catch(() => {
+            $('#status').textContent = 'Zkop√≠rov√°n√≠ se nezda≈ôilo ‚Äî text m≈Ø≈æete zkop√≠rovat ruƒçnƒõ.';
+          });
+        }
+
+        function downloadText() {
+          const text = $('#output').value;
+          const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = 'map_style.mrules';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          $('#status').textContent = 'Soubor .mrules byl sta≈æen.';
+        }
+
+        function preset() {
+          const preset = {
+            background: '#efe6cf',
+            sea: '#a9cbd0',
+            waterFill: '#7fb7c2',
+            wetlandFill: '#9bc7c2',
+            riverColor: '#2f8190',
+            forestFill: '#889b6d',
+            meadowFill: '#d5cf9a',
+            sandFill: '#e7d4a2',
+            buildingFill: '#6c534a',
+            majorColor: '#ba5b36',
+            minorColor: '#d39b68',
+            pathColor: '#6d5345',
+            railColor: '#7b7f8a',
+            placeColor: '#302821',
+            fontName: 'DejaVu Sans',
+            fontSize: 14,
+            fontWeight: 'bold',
+            labelOffset: 3,
+            textHaloRadius: 2,
+            textHaloOpacity: 0.9,
+            textOpacity: 1,
+            areaOpacity: 0.85,
+            riverWidth: 1.4,
+            riverOpacity: 0.95,
+            majorWidth: 2.6,
+            pathWidth: 0.8,
+            minZoom: 0,
+            maxZoom: 22,
+            lineCap: 'round'
+          };
+
+          Object.entries(preset).forEach(([key, value]) => {
+            const input = $(key);
+            if (!input) return;
+            if (input.type === 'checkbox') {
+              input.checked = Boolean(value);
+            } else {
+              input.value = value;
+            }
+          });
+
+          ['waterOn', 'wetlandOn', 'riverOn', 'forestOn', 'meadowOn', 'sandOn', 'buildingOn', 'majorOn', 'minorOn', 'pathOn', 'railOn', 'placeOn', 'keepUpright', 'followPath'].forEach((id) => {
+            const el = $(id);
+            if (el) el.checked = true;
+          });
+
+          build();
+          $('#status').textContent = 'P≈ôedvolba byla aplikov√°na.';
+        }
+
+        function setTab(tabName) {
+          document.querySelectorAll('.tab').forEach((tab) => {
+            tab.classList.toggle('active', tab.dataset.tab === tabName);
+          });
+          document.querySelectorAll('.tab-panel').forEach((panel) => {
+            panel.classList.toggle('active', panel.id === ('panel-' + tabName));
+          });
+        }
+
+        ['input', 'change'].forEach((eventName) => {
+          root.addEventListener(eventName, (e) => {
+            if (e.target && e.target.matches('input, select')) {
+              build();
+              $('#status').textContent = 'Generov√°n√≠ aktualizov√°no.';
+            }
+          });
+        });
+
+        $('#generateBtn').addEventListener('click', () => {
+          build();
+          $('#status').textContent = '.mrules byl vygenerov√°n.';
+        });
+
+        $('#generateFromGuiBtn').addEventListener('click', () => {
+          build();
+          $('#status').textContent = 'V√Ωstup z GUI byl aktualizov√°n.';
+        });
+
+        $('#applyManualBtn').addEventListener('click', applyManualText);
+        $('#copyBtn').addEventListener('click', copyText);
+        $('#downloadBtn').addEventListener('click', downloadText);
+        $('#presetBtn').addEventListener('click', preset);
+
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.addEventListener('click', () => setTab(tab.dataset.tab));
+        });
+
+        build();
+      })();
+    </script>
+  </body>
 </html>
