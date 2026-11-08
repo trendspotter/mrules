@@ -7,3 +7,5 @@ stáhněte .htm soubor a spustťe v prohlížeči.
 # nápověda
 další info v nápovědě aplikace. 
 
+# language support
+CZ, EN, DE, FR, ES, IT, PL, HU, FI, UA
